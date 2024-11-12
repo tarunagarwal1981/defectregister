@@ -22,7 +22,7 @@ const DefectsTable = () => {
   const [editingRow, setEditingRow] = useState(null);
 
   const columns = [
-    'S.No',
+    'SNo',
     'Vessel Name',
     'Equipments',
     'Description',
