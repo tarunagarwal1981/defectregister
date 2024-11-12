@@ -7,18 +7,20 @@ const DefectsTable = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-    setLoading(true);
-    const { data: tableData, error } = await supabase
-      .from('defects register') // Only table name, no schema prefix
-      .select('*'); // No need for headers, as it's now in the public schema
+  setLoading(true);
+  const { data: tableData, error } = await supabase
+    .from('defects register') // Make sure this matches the exact table name
+    .select('*');
 
-    if (error) {
-      console.error('Error fetching data:', error);
-    } else {
-      setData(tableData);
-    }
-    setLoading(false);
-  };
+  if (error) {
+    console.error('Error fetching data:', error);
+  } else {
+    console.log('Fetched Data:', tableData); // Add this line
+    setData(tableData);
+  }
+  setLoading(false);
+};
+
 
   useEffect(() => {
     fetchData();
