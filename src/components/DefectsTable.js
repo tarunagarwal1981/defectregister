@@ -9,8 +9,11 @@ const DefectsTable = () => {
   const fetchData = async () => {
     setLoading(true);
     const { data: tableData, error } = await supabase
-      .from('defects.defects register') // Use schema.table format
-      .select('*');
+      .from('defects register') // Only table name, no schema prefix
+      .select('*', { head: true })
+      .headers({
+        Prefer: 'schema=defects', // Specify the schema here
+      });
 
     if (error) {
       console.error('Error fetching data:', error);
