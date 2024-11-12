@@ -12,7 +12,10 @@ const DefectsTable = () => {
     // Fetch data from the "defects register" table in the "public" schema
     const { data: tableData, error } = await supabase
       .from('defects register') // Table name only, no headers needed
-      .select('*');
+      .select('*', { head: true })
+      .headers({
+        Prefer: 'schema=public', // Specify the schema here
+      });
 
     if (error) {
       console.error('Error fetching data:', error);
