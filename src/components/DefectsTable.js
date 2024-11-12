@@ -12,7 +12,7 @@ const DefectsTable = () => {
       .from('defects register') // Only table name, no schema prefix
       .select('*', { head: true })
       .headers({
-        Prefer: 'schema=defects', // Specify the schema here
+        Prefer: 'schema=public', // Specify the schema here
       });
 
     if (error) {
