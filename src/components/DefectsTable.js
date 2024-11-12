@@ -6,7 +6,7 @@ const DefectsTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newRow, setNewRow] = useState({
-    'S.No': '',
+    'SNo': '',
     'Vessel Name': '',
     Equipments: '',
     Description: '',
