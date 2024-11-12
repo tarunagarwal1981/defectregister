@@ -27,7 +27,7 @@ const DefectsTable = () => {
 
   return (
     <div>
-      <h2>Defects Register</h2>
+      <h2>defects register</h2>
       {loading ? (
         <p>Loading data...</p>
       ) : (
