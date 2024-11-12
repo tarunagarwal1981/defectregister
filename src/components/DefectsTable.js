@@ -8,21 +8,15 @@ const DefectsTable = () => {
 
   const fetchData = async () => {
     setLoading(true);
-
-    // Fetch data from the "defects register" table in the "public" schema
     const { data: tableData, error } = await supabase
-      .from('defects register') // Table name only, no headers needed
-      .select('*', { head: true })
-      .headers({
-        Prefer: 'schema=public', // Specify the schema here
-      });
+      .from('defects register') // Only table name, no schema prefix
+      .select('*'); // No need for headers, as it's now in the public schema
 
     if (error) {
       console.error('Error fetching data:', error);
     } else {
       setData(tableData);
     }
-
     setLoading(false);
   };
 
