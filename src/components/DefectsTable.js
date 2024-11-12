@@ -6,22 +6,41 @@ const DefectsTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newRow, setNewRow] = useState({
-    vessel_name: '',
-    defect_description: '',
-    status: '',
-    reported_date: '',
-    assigned_to: '',
-    priority: '',
+    'S.No': '',
+    'Vessel Name': '',
+    Equipments: '',
+    Description: '',
+    'Action Planned': '',
+    Criticality: '',
+    'Date reported': '',
+    'Date Completed': '',
+    'Status (Vessel)': '',
+    Comments: '',
+    'Item Type': '',
+    Path: '',
   });
 
-  // Define columns based on the actual CSV structure
-  const columns = ['id', 'vessel_name', 'defect_description', 'status', 'reported_date', 'assigned_to', 'priority'];
+  // Define columns to display headers correctly
+  const columns = [
+    'S.No',
+    'Vessel Name',
+    'Equipments',
+    'Description',
+    'Action Planned',
+    'Criticality',
+    'Date reported',
+    'Date Completed',
+    'Status (Vessel)',
+    'Comments',
+    'Item Type',
+    'Path',
+  ];
 
   // Fetch data from the defects register table
   const fetchData = async () => {
     setLoading(true);
     const { data: tableData, error } = await supabase
-      .from('defects register') // Use exact table name
+      .from('defects register')
       .select('*');
 
     if (error) {
@@ -36,24 +55,30 @@ const DefectsTable = () => {
     fetchData();
   }, []);
 
-  // Function to add a new row to the table
+  // Handle adding a new row
   const handleAddRow = async () => {
     const { data: newData, error } = await supabase
-      .from('defects register') // Ensure this matches the exact table name
+      .from('defects register')
       .insert([newRow]);
 
     if (error) {
       console.error('Error adding row:', error);
     } else {
-      setData([...data, ...newData]); // Update the data array with the new row
-      // Reset the form after successful insertion
+      setData([...data, ...newData]);
+      // Reset newRow fields
       setNewRow({
-        vessel_name: '',
-        defect_description: '',
-        status: '',
-        reported_date: '',
-        assigned_to: '',
-        priority: '',
+        'S.No': '',
+        'Vessel Name': '',
+        Equipments: '',
+        Description: '',
+        'Action Planned': '',
+        Criticality: '',
+        'Date reported': '',
+        'Date Completed': '',
+        'Status (Vessel)': '',
+        Comments: '',
+        'Item Type': '',
+        Path: '',
       });
     }
   };
@@ -92,44 +117,17 @@ const DefectsTable = () => {
 
       <div style={{ marginTop: '20px' }}>
         <h3>Add New Row</h3>
-        <input
-          type="text"
-          placeholder="Vessel Name"
-          value={newRow.vessel_name}
-          onChange={(e) => setNewRow({ ...newRow, vessel_name: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Defect Description"
-          value={newRow.defect_description}
-          onChange={(e) =>
-            setNewRow({ ...newRow, defect_description: e.target.value })
-          }
-        />
-        <input
-          type="text"
-          placeholder="Status"
-          value={newRow.status}
-          onChange={(e) => setNewRow({ ...newRow, status: e.target.value })}
-        />
-        <input
-          type="date"
-          placeholder="Reported Date"
-          value={newRow.reported_date}
-          onChange={(e) => setNewRow({ ...newRow, reported_date: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Assigned To"
-          value={newRow.assigned_to}
-          onChange={(e) => setNewRow({ ...newRow, assigned_to: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Priority"
-          value={newRow.priority}
-          onChange={(e) => setNewRow({ ...newRow, priority: e.target.value })}
-        />
+        {columns.map((col) => (
+          <div key={col} style={{ marginBottom: '10px' }}>
+            <label>{col}: </label>
+            <input
+              type="text"
+              placeholder={col}
+              value={newRow[col]}
+              onChange={(e) => setNewRow({ ...newRow, [col]: e.target.value })}
+            />
+          </div>
+        ))}
         <button onClick={handleAddRow}>Add Row</button>
       </div>
     </div>
