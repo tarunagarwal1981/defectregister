@@ -8,19 +8,19 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check current session
-    const checkUser = async () => {
+    // Check current auth session
+    const checkSession = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
       } catch (error) {
-        console.error('Error checking auth status:', error);
+        console.error('Error checking session:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    checkUser();
+    checkSession();
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -28,7 +28,7 @@ function App() {
     });
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscription) subscription.unsubscribe();
     };
   }, []);
 
@@ -38,19 +38,37 @@ function App() {
       if (error) throw error;
       setUser(null);
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Error signing out:', error);
     }
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#132337', color: '#f4f4f4' }}>
+        Loading...
+      </div>
+    );
   }
 
   return (
     <div className="App" style={{ backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4', fontFamily: 'Nunito, sans-serif' }}>
       {user ? (
         <>
-          <button onClick={handleLogout} style={{ backgroundColor: '#4a90e2', color: '#f4f4f4', border: 'none', padding: '10px 20px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', margin: '10px' }}>Logout</button>
+          <button 
+            onClick={handleLogout} 
+            style={{ 
+              backgroundColor: '#4a90e2', 
+              color: '#f4f4f4', 
+              border: 'none', 
+              padding: '10px 20px', 
+              fontSize: '16px', 
+              cursor: 'pointer', 
+              borderRadius: '4px', 
+              margin: '10px' 
+            }}
+          >
+            Logout
+          </button>
           <DataTable userId={user.id} />
         </>
       ) : (
