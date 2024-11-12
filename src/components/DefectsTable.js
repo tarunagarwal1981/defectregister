@@ -1,3 +1,4 @@
+// src/components/DefectsTable.js
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
@@ -53,7 +54,8 @@ const DefectsTable = () => {
   };
 
   const handleLogout = () => {
-    // Implement logout logic if needed
+    // Implement actual logout logic here
+    supabase.auth.signOut();
   };
 
   return (
@@ -73,9 +75,6 @@ const DefectsTable = () => {
                 {columns.map((col) => (
                   <th key={col} style={styles.tableHeader}>{col}</th>
                 ))}
-                <th style={styles.tableHeader}>
-                  <button onClick={() => setNewRow({})} style={styles.addButton}>+</button>
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -106,6 +105,9 @@ const DefectsTable = () => {
               )}
             </tbody>
           </table>
+          {!newRow && (
+            <button onClick={() => setNewRow({})} style={styles.addButton}>+</button>
+          )}
         </div>
       )}
     </div>
@@ -119,11 +121,16 @@ const styles = {
     color: '#f4f4f4',
     minHeight: '100vh',
     padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
+    maxWidth: '1200px',
   },
   heading: {
     fontSize: '36px',
@@ -140,6 +147,8 @@ const styles = {
   },
   tableContainer: {
     marginTop: '20px',
+    width: '100%',
+    maxWidth: '1200px',
   },
   table: {
     width: '100%',
@@ -168,10 +177,12 @@ const styles = {
     backgroundColor: '#4a90e2',
     color: '#f4f4f4',
     border: 'none',
-    fontSize: '16px',
+    fontSize: '24px',
     padding: '5px 10px',
     cursor: 'pointer',
     borderRadius: '50%',
+    marginTop: '10px',
+    alignSelf: 'center',
   },
   input: {
     padding: '8px',
