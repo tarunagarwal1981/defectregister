@@ -6,12 +6,11 @@ const DefectsTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch data from the defects register table
   const fetchData = async () => {
     setLoading(true);
     const { data: tableData, error } = await supabase
-      .from('defects.defects%20register')
-      .select('*'); // Fetches all rows and columns
+      .from('defects.defects register') // Use schema.table format
+      .select('*');
 
     if (error) {
       console.error('Error fetching data:', error);
