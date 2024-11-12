@@ -10,14 +10,20 @@ const Auth = ({ onLogin }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      setError(error.message);
-    } else {
-      onLogin();
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setError(error.message);
+      } else {
+        onLogin();
+      }
+    } catch (err) {
+      console.error('Unexpected error during login:', err);
+      setError('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -81,10 +87,10 @@ const styles = {
     fontSize: '16px',
     alignSelf: 'flex-start',
     marginBottom: '8px',
-    width: '100%', // Ensures the label and input are aligned
+    width: '100%',
   },
   input: {
-    width: '100%', // Ensures consistent width for both input fields
+    width: '100%',
     padding: '10px',
     fontSize: '14px',
     borderRadius: '4px',
@@ -92,7 +98,7 @@ const styles = {
     backgroundColor: '#1b3a57',
     color: '#f4f4f4',
     marginBottom: '20px',
-    boxSizing: 'border-box', // Prevents padding from affecting width
+    boxSizing: 'border-box',
   },
   loginButton: {
     backgroundColor: '#4a90e2',
@@ -102,8 +108,8 @@ const styles = {
     fontSize: '16px',
     cursor: 'pointer',
     borderRadius: '4px',
-    width: '100%', // Full width for button consistency
-    maxWidth: '400px', // Keeps the button width consistent with inputs
+    width: '100%',
+    maxWidth: '400px',
   },
   errorText: {
     color: 'red',
