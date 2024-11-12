@@ -1,24 +1,10 @@
-// src/components/DefectsTable.js
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
 const DefectsTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newRow, setNewRow] = useState({
-    'S.No': '',
-    'Vessel Name': '',
-    Equipments: '',
-    Description: '',
-    'Action Planned': '',
-    Criticality: '',
-    'Date reported': '',
-    'Date Completed': '',
-    'Status (Vessel)': '',
-    Comments: '',
-    'Item Type': '',
-    Path: '',
-  });
+  const [newRow, setNewRow] = useState(null); // Track the new row being added
 
   const columns = [
     'S.No',
@@ -62,20 +48,7 @@ const DefectsTable = () => {
       console.error('Error adding row:', error);
     } else {
       setData([...data, ...newData]);
-      setNewRow({
-        'S.No': '',
-        'Vessel Name': '',
-        Equipments: '',
-        Description: '',
-        'Action Planned': '',
-        Criticality: '',
-        'Date reported': '',
-        'Date Completed': '',
-        'Status (Vessel)': '',
-        Comments: '',
-        'Item Type': '',
-        Path: '',
-      });
+      setNewRow(null); // Clear new row fields after adding
     }
   };
 
@@ -85,8 +58,11 @@ const DefectsTable = () => {
 
   return (
     <div style={styles.pageContainer}>
-      <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
-      <h1 style={styles.heading}>Defects Register</h1>
+      <div style={styles.header}>
+        <h1 style={styles.heading}>Defects Register</h1>
+        <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
+      </div>
+
       {loading ? (
         <p style={styles.loadingText}>Loading data...</p>
       ) : (
@@ -97,41 +73,39 @@ const DefectsTable = () => {
                 {columns.map((col) => (
                   <th key={col} style={styles.tableHeader}>{col}</th>
                 ))}
+                <th style={styles.tableHeader}>
+                  <button onClick={() => setNewRow({})} style={styles.addButton}>+</button>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {data.length > 0 ? (
-                data.map((row, index) => (
-                  <tr key={index} style={styles.tableRow}>
-                    {columns.map((col) => (
-                      <td key={col} style={styles.tableCell}>{row[col]}</td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
+              {data.map((row, index) => (
+                <tr key={index} style={styles.tableRow}>
+                  {columns.map((col) => (
+                    <td key={col} style={styles.tableCell}>{row[col]}</td>
+                  ))}
+                </tr>
+              ))}
+              {newRow && (
                 <tr>
-                  <td colSpan={columns.length} style={styles.tableCell}>No data available</td>
+                  {columns.map((col) => (
+                    <td key={col} style={styles.tableCell}>
+                      <input
+                        type="text"
+                        placeholder={col}
+                        value={newRow[col] || ''}
+                        onChange={(e) => setNewRow({ ...newRow, [col]: e.target.value })}
+                        style={styles.input}
+                      />
+                    </td>
+                  ))}
+                  <td style={styles.tableCell}>
+                    <button onClick={handleAddRow} style={styles.saveButton}>Save</button>
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
-
-          <div style={styles.addRowContainer}>
-            <h3 style={styles.addRowHeading}>Add New Row</h3>
-            {columns.map((col) => (
-              <div key={col} style={styles.inputContainer}>
-                <label style={styles.label}>{col}:</label>
-                <input
-                  type="text"
-                  placeholder={col}
-                  value={newRow[col]}
-                  onChange={(e) => setNewRow({ ...newRow, [col]: e.target.value })}
-                  style={styles.input}
-                />
-              </div>
-            ))}
-            <button onClick={handleAddRow} style={styles.addButton}>Add Row</button>
-          </div>
         </div>
       )}
     </div>
@@ -146,21 +120,18 @@ const styles = {
     minHeight: '100vh',
     padding: '20px',
   },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   heading: {
     fontSize: '36px',
     color: '#f4f4f4',
-    marginBottom: '20px',
-  },
-  loadingText: {
-    fontSize: '14px',
-    color: '#f4f4f4',
   },
   logoutButton: {
-    position: 'absolute',
-    top: '20px',
-    right: '20px',
-    backgroundColor: '#f4f4f4',
-    color: '#132337',
+    backgroundColor: '#4a90e2',
+    color: '#f4f4f4',
     border: 'none',
     padding: '10px 20px',
     fontSize: '14px',
@@ -173,7 +144,6 @@ const styles = {
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    marginBottom: '20px',
   },
   tableHeader: {
     fontSize: '14px',
@@ -182,6 +152,7 @@ const styles = {
     backgroundColor: '#1b3a57',
     color: '#f4f4f4',
     borderBottom: '1px solid #f4f4f4',
+    textAlign: 'left',
   },
   tableRow: {
     backgroundColor: '#132337',
@@ -193,40 +164,30 @@ const styles = {
     textAlign: 'left',
     fontSize: '14px',
   },
-  addRowContainer: {
-    marginTop: '20px',
-    padding: '20px',
-    backgroundColor: '#1b3a57',
-    borderRadius: '8px',
-  },
-  addRowHeading: {
-    fontSize: '18px',
-    marginBottom: '10px',
+  addButton: {
+    backgroundColor: '#4a90e2',
     color: '#f4f4f4',
-  },
-  inputContainer: {
-    marginBottom: '10px',
-  },
-  label: {
-    fontSize: '14px',
-    marginRight: '10px',
+    border: 'none',
+    fontSize: '16px',
+    padding: '5px 10px',
+    cursor: 'pointer',
+    borderRadius: '50%',
   },
   input: {
     padding: '8px',
     fontSize: '14px',
     borderRadius: '4px',
     border: '1px solid #f4f4f4',
-    backgroundColor: '#132337',
+    backgroundColor: '#1b3a57',
     color: '#f4f4f4',
     width: '100%',
   },
-  addButton: {
-    marginTop: '10px',
-    padding: '10px 20px',
-    backgroundColor: '#f4f4f4',
-    color: '#132337',
+  saveButton: {
+    backgroundColor: '#4a90e2',
+    color: '#f4f4f4',
     border: 'none',
     fontSize: '14px',
+    padding: '5px 10px',
     cursor: 'pointer',
     borderRadius: '4px',
   },
