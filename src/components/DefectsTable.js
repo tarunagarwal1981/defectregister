@@ -19,8 +19,8 @@ const DefectsTable = () => {
     'Item Type': '',
     Path: '',
   });
+  const [editingRow, setEditingRow] = useState(null);
 
-  // Define columns to display headers correctly
   const columns = [
     'S.No',
     'Vessel Name',
@@ -36,7 +36,6 @@ const DefectsTable = () => {
     'Path',
   ];
 
-  // Fetch data from the defects register table
   const fetchData = async () => {
     setLoading(true);
     const { data: tableData, error } = await supabase
@@ -55,7 +54,6 @@ const DefectsTable = () => {
     fetchData();
   }, []);
 
-  // Handle adding a new row
   const handleAddRow = async () => {
     const { data: newData, error } = await supabase
       .from('defects register')
@@ -65,7 +63,6 @@ const DefectsTable = () => {
       console.error('Error adding row:', error);
     } else {
       setData([...data, ...newData]);
-      // Reset newRow fields
       setNewRow({
         'S.No': '',
         'Vessel Name': '',
@@ -83,6 +80,36 @@ const DefectsTable = () => {
     }
   };
 
+  const handleEditRow = (row) => {
+    setEditingRow(row); // Set the row to be edited
+  };
+
+  const handleSaveEdit = async () => {
+    const { data: updatedData, error } = await supabase
+      .from('defects register')
+      .update(editingRow)
+      .eq('S.No', editingRow['S.No']); // Assuming 'S.No' is a unique identifier
+
+    if (error) {
+      console.error('Error saving row:', error);
+    } else {
+      setData((prevData) =>
+        prevData.map((row) =>
+          row['S.No'] === editingRow['S.No'] ? editingRow : row
+        )
+      );
+      setEditingRow(null); // Exit edit mode
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRow(null); // Exit edit mode without saving
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditingRow({ ...editingRow, [field]: value });
+  };
+
   return (
     <div>
       <h2>Defects Register</h2>
@@ -95,6 +122,7 @@ const DefectsTable = () => {
               {columns.map((col) => (
                 <th key={col}>{col}</th>
               ))}
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -102,13 +130,33 @@ const DefectsTable = () => {
               data.map((row, index) => (
                 <tr key={index}>
                   {columns.map((col) => (
-                    <td key={col}>{row[col]}</td>
+                    <td key={col}>
+                      {editingRow && editingRow['S.No'] === row['S.No'] ? (
+                        <input
+                          type="text"
+                          value={editingRow[col]}
+                          onChange={(e) => handleEditChange(col, e.target.value)}
+                        />
+                      ) : (
+                        row[col]
+                      )}
+                    </td>
                   ))}
+                  <td>
+                    {editingRow && editingRow['S.No'] === row['S.No'] ? (
+                      <>
+                        <button onClick={handleSaveEdit}>Save</button>
+                        <button onClick={handleCancelEdit}>Cancel</button>
+                      </>
+                    ) : (
+                      <button onClick={() => handleEditRow(row)}>Edit</button>
+                    )}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length}>No data available</td>
+                <td colSpan={columns.length + 1}>No data available</td>
               </tr>
             )}
           </tbody>
