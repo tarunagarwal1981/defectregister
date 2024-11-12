@@ -6,7 +6,7 @@ const DefectsTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newRow, setNewRow] = useState({
-    'SNo': '',
+    'S.No': '',
     'Vessel Name': '',
     Equipments: '',
     Description: '',
@@ -19,10 +19,9 @@ const DefectsTable = () => {
     'Item Type': '',
     Path: '',
   });
-  const [editingRow, setEditingRow] = useState(null);
 
   const columns = [
-    'SNo',
+    'S.No',
     'Vessel Name',
     'Equipments',
     'Description',
@@ -80,106 +79,157 @@ const DefectsTable = () => {
     }
   };
 
-  const handleEditRow = (row) => {
-    setEditingRow(row); // Set the row to be edited
-  };
-
-  const handleSaveEdit = async () => {
-    const { data: updatedData, error } = await supabase
-      .from('defects register')
-      .update(editingRow)
-      .eq('S.No', editingRow['S.No']); // Assuming 'S.No' is a unique identifier
-
-    if (error) {
-      console.error('Error saving row:', error);
-    } else {
-      setData((prevData) =>
-        prevData.map((row) =>
-          row['S.No'] === editingRow['S.No'] ? editingRow : row
-        )
-      );
-      setEditingRow(null); // Exit edit mode
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingRow(null); // Exit edit mode without saving
-  };
-
-  const handleEditChange = (field, value) => {
-    setEditingRow({ ...editingRow, [field]: value });
+  const handleLogout = () => {
+    // Implement logout logic if needed
   };
 
   return (
-    <div>
-      <h2>Defects Register</h2>
+    <div style={styles.pageContainer}>
+      <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
+      <h1 style={styles.heading}>Defects Register</h1>
       {loading ? (
-        <p>Loading data...</p>
+        <p style={styles.loadingText}>Loading data...</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              {columns.map((col) => (
-                <th key={col}>{col}</th>
-              ))}
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.length > 0 ? (
-              data.map((row, index) => (
-                <tr key={index}>
-                  {columns.map((col) => (
-                    <td key={col}>
-                      {editingRow && editingRow['S.No'] === row['S.No'] ? (
-                        <input
-                          type="text"
-                          value={editingRow[col]}
-                          onChange={(e) => handleEditChange(col, e.target.value)}
-                        />
-                      ) : (
-                        row[col]
-                      )}
-                    </td>
-                  ))}
-                  <td>
-                    {editingRow && editingRow['S.No'] === row['S.No'] ? (
-                      <>
-                        <button onClick={handleSaveEdit}>Save</button>
-                        <button onClick={handleCancelEdit}>Cancel</button>
-                      </>
-                    ) : (
-                      <button onClick={() => handleEditRow(row)}>Edit</button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
+        <div style={styles.tableContainer}>
+          <table style={styles.table}>
+            <thead>
               <tr>
-                <td colSpan={columns.length + 1}>No data available</td>
+                {columns.map((col) => (
+                  <th key={col} style={styles.tableHeader}>{col}</th>
+                ))}
               </tr>
-            )}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {data.length > 0 ? (
+                data.map((row, index) => (
+                  <tr key={index} style={styles.tableRow}>
+                    {columns.map((col) => (
+                      <td key={col} style={styles.tableCell}>{row[col]}</td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columns.length} style={styles.tableCell}>No data available</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
-      <div style={{ marginTop: '20px' }}>
-        <h3>Add New Row</h3>
-        {columns.map((col) => (
-          <div key={col} style={{ marginBottom: '10px' }}>
-            <label>{col}: </label>
-            <input
-              type="text"
-              placeholder={col}
-              value={newRow[col]}
-              onChange={(e) => setNewRow({ ...newRow, [col]: e.target.value })}
-            />
+          <div style={styles.addRowContainer}>
+            <h3 style={styles.addRowHeading}>Add New Row</h3>
+            {columns.map((col) => (
+              <div key={col} style={styles.inputContainer}>
+                <label style={styles.label}>{col}:</label>
+                <input
+                  type="text"
+                  placeholder={col}
+                  value={newRow[col]}
+                  onChange={(e) => setNewRow({ ...newRow, [col]: e.target.value })}
+                  style={styles.input}
+                />
+              </div>
+            ))}
+            <button onClick={handleAddRow} style={styles.addButton}>Add Row</button>
           </div>
-        ))}
-        <button onClick={handleAddRow}>Add Row</button>
-      </div>
+        </div>
+      )}
     </div>
   );
+};
+
+const styles = {
+  pageContainer: {
+    backgroundColor: '#132337',
+    fontFamily: 'Nunito, sans-serif',
+    color: '#f4f4f4',
+    minHeight: '100vh',
+    padding: '20px',
+  },
+  heading: {
+    fontSize: '36px',
+    color: '#f4f4f4',
+    marginBottom: '20px',
+  },
+  loadingText: {
+    fontSize: '14px',
+    color: '#f4f4f4',
+  },
+  logoutButton: {
+    position: 'absolute',
+    top: '20px',
+    right: '20px',
+    backgroundColor: '#f4f4f4',
+    color: '#132337',
+    border: 'none',
+    padding: '10px 20px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    borderRadius: '4px',
+  },
+  tableContainer: {
+    marginTop: '20px',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginBottom: '20px',
+  },
+  tableHeader: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    padding: '10px',
+    backgroundColor: '#1b3a57',
+    color: '#f4f4f4',
+    borderBottom: '1px solid #f4f4f4',
+  },
+  tableRow: {
+    backgroundColor: '#132337',
+    color: '#f4f4f4',
+  },
+  tableCell: {
+    padding: '10px',
+    borderBottom: '1px solid #f4f4f4',
+    textAlign: 'left',
+    fontSize: '14px',
+  },
+  addRowContainer: {
+    marginTop: '20px',
+    padding: '20px',
+    backgroundColor: '#1b3a57',
+    borderRadius: '8px',
+  },
+  addRowHeading: {
+    fontSize: '18px',
+    marginBottom: '10px',
+    color: '#f4f4f4',
+  },
+  inputContainer: {
+    marginBottom: '10px',
+  },
+  label: {
+    fontSize: '14px',
+    marginRight: '10px',
+  },
+  input: {
+    padding: '8px',
+    fontSize: '14px',
+    borderRadius: '4px',
+    border: '1px solid #f4f4f4',
+    backgroundColor: '#132337',
+    color: '#f4f4f4',
+    width: '100%',
+  },
+  addButton: {
+    marginTop: '10px',
+    padding: '10px 20px',
+    backgroundColor: '#f4f4f4',
+    color: '#132337',
+    border: 'none',
+    fontSize: '14px',
+    cursor: 'pointer',
+    borderRadius: '4px',
+  },
 };
 
 export default DefectsTable;
