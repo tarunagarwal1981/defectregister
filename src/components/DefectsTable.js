@@ -10,7 +10,7 @@ const DefectsTable = () => {
   const fetchData = async () => {
     setLoading(true);
     const { data: tableData, error } = await supabase
-      .from('defects%20register')
+      .from('defects.defects%20register')
       .select('*'); // Fetches all rows and columns
 
     if (error) {
