@@ -1,7 +1,6 @@
 import React from 'react';
 
 const DataTable = ({ data, onAddDefect }) => {
-  // Log data to ensure it's being received correctly
   console.log('Data received by DataTable:', data);
 
   return (
@@ -41,15 +40,15 @@ const DataTable = ({ data, onAddDefect }) => {
           {data && data.length > 0 ? (
             data.map((defect, index) => (
               <tr key={index} style={{ textAlign: 'center' }}>
-                <td style={cellStyle}>{index + 1}</td>
-                <td style={cellStyle}>{defect.vesselName}</td>
-                <td style={cellStyle}>{defect.equipments}</td>
-                <td style={cellStyle}>{defect.description}</td>
-                <td style={cellStyle}>{defect.actionPlanned}</td>
-                <td style={cellStyle}>{defect.criticality}</td>
-                <td style={cellStyle}>{defect.dateReported}</td>
-                <td style={cellStyle}>{defect.dateCompleted}</td>
-                <td style={cellStyle}>{defect.status}</td>
+                <td style={cellStyle}>{defect.SNo}</td>
+                <td style={cellStyle}>{defect['Vessel Name']}</td>
+                <td style={cellStyle}>{defect.Equipments}</td>
+                <td style={cellStyle}>{defect.Description}</td>
+                <td style={cellStyle}>{defect['Action Planned']}</td>
+                <td style={cellStyle}>{defect.Criticality}</td>
+                <td style={cellStyle}>{defect['Date Reported']}</td>
+                <td style={cellStyle}>{defect['Date Completed']}</td>
+                <td style={cellStyle}>{defect['Status (Vessel)']}</td>
               </tr>
             ))
           ) : (
