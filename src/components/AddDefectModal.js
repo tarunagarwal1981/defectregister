@@ -1,6 +1,5 @@
 // src/components/AddDefectModal.js
 import React, { useState } from 'react';
-import { XIcon } from 'lucide-react';
 
 const AddDefectModal = ({ isOpen, onClose, onAdd, columns }) => {
   const [formData, setFormData] = useState({});
@@ -18,9 +17,7 @@ const AddDefectModal = ({ isOpen, onClose, onAdd, columns }) => {
       <div style={styles.modalContent}>
         <div style={styles.modalHeader}>
           <h2>Add New Defect</h2>
-          <button onClick={onClose} style={styles.closeButton}>
-            <XIcon size={20} />
-          </button>
+          <button onClick={onClose} style={styles.closeButton}>×</button>
         </div>
         <form onSubmit={handleSubmit} style={styles.form}>
           {columns.map((col) => (
@@ -51,3 +48,5 @@ const AddDefectModal = ({ isOpen, onClose, onAdd, columns }) => {
     </div>
   );
 };
+
+export default AddDefectModal;
