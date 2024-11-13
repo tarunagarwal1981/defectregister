@@ -17,7 +17,6 @@ function App() {
 
     checkAuth();
 
-    // Set up auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -25,10 +24,11 @@ function App() {
     return () => authListener?.unsubscribe();
   }, []);
 
-  // Loading screen while checking auth state
+  // Conditional Loading Screen
   if (loading) {
     return (
-      <div style={{
+      <div
+        style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -36,21 +36,29 @@ function App() {
           backgroundColor: '#132337',
           color: '#f4f4f4',
           fontFamily: 'Nunito, sans-serif',
-        }}>
+        }}
+      >
         Loading...
       </div>
     );
   }
 
-  // Main app content with conditional rendering based on user auth state
+  // Main App Content
   return (
-    <div style={{
+    <div
+      style={{
         backgroundColor: '#132337',
         minHeight: '100vh',
         color: '#f4f4f4',
         fontFamily: 'Nunito, sans-serif',
-      }}>
-      {user ? <DataTable userId={user.id} /> : <Auth onLogin={setUser} />}
+        padding: '20px',
+      }}
+    >
+      {user ? (
+        <DataTable userId={user.id} />
+      ) : (
+        <Auth onLogin={() => setUser(supabase.auth.user())} />
+      )}
     </div>
   );
 }
