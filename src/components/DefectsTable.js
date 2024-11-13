@@ -5,7 +5,6 @@ import { useTable } from 'react-table';
 
 const DefectsTable = ({ userId }) => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const columns = React.useMemo(
     () => [
@@ -18,14 +17,8 @@ const DefectsTable = ({ userId }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
       const { data: defects, error } = await supabase.from('defects').select('*');
-      if (error) {
-        console.error('Error fetching data:', error);
-      } else {
-        setData(defects);
-      }
-      setLoading(false);
+      if (!error) setData(defects);
     };
 
     fetchData();
@@ -36,17 +29,15 @@ const DefectsTable = ({ userId }) => {
     data,
   });
 
-  return loading ? (
-    <p>Loading...</p>
-  ) : (
+  return (
     <div>
       <h3>Defects Register</h3>
-      <table {...getTableProps()} style={{ border: '1px solid #4a90e2', width: '100%', marginTop: '20px' }}>
+      <table {...getTableProps()} style={{ width: '100%', marginTop: '20px' }}>
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps()} style={{ borderBottom: '2px solid #4a90e2', padding: '10px' }}>
+                <th {...column.getHeaderProps()} style={{ padding: '10px', borderBottom: '2px solid #4a90e2' }}>
                   {column.render('Header')}
                 </th>
               ))}
