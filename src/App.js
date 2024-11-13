@@ -25,7 +25,7 @@ function App() {
         color: '#f4f4f4',
         fontFamily: 'Nunito, sans-serif',
       }}>
-        Loading
+        {Loading}
       </div>
     );
   }
