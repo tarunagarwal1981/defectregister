@@ -9,54 +9,36 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const session = supabase.auth.session();
-      setUser(session?.user ?? null);
-      setLoading(false);
-    };
-
-    checkAuth();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => authListener?.unsubscribe();
+    const session = supabase.auth.session();
+    setUser(session?.user ?? null);
+    setLoading(false);
   }, []);
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          backgroundColor: '#132337',
-          color: '#f4f4f4',
-          fontFamily: 'Nunito, sans-serif',
-        }}
-      >
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#132337',
+        color: '#f4f4f4',
+        fontFamily: 'Nunito, sans-serif',
+      }}>
         Loading...
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: '#132337',
-        minHeight: '100vh',
-        color: '#f4f4f4',
-        fontFamily: 'Nunito, sans-serif',
-        padding: '20px',
-      }}
-    >
-      {user ? (
-        <DataTable userId={user.id} />
-      ) : (
-        <Auth onLogin={() => setUser(supabase.auth.user())} />
-      )}
+    <div style={{
+      backgroundColor: '#132337',
+      minHeight: '100vh',
+      color: '#f4f4f4',
+      fontFamily: 'Nunito, sans-serif',
+      padding: '20px',
+    }}>
+      {user ? <DataTable userId={user.id} /> : <Auth onLogin={() => setUser(supabase.auth.user())} />}
     </div>
   );
 }
