@@ -1,25 +1,11 @@
-/* Basic styles for the app */
+// File: src/index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f9;
-}
-
-h1, h2, h3 {
-  color: #333;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-table, th, td {
-  border: 1px solid #ddd;
-}
-
-th, td {
-  padding: 10px;
-  text-align: left;
+  min-height: 100vh;
+  background-color: #132337;
+  color: #f4f4f4;
 }
