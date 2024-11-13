@@ -1,13 +1,13 @@
-// File: src/App.tsx
-import React from 'react'
-import DefectsTable from './components/DefectsTable'
+import React from 'react';
+import DefectsTable from './components/DefectsTable';
 
-function App() {
+const App = () => {
   return (
-    <div className="min-h-screen bg-[#132337] p-4">
+    <div className="bg-[#132337] text-[#f4f4f4] min-h-screen p-6 font-nunito">
+      <h1 className="text-4xl mb-8">Defects Register</h1>
       <DefectsTable />
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
