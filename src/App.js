@@ -1,6 +1,6 @@
 // App.js
 import React, { useState, useEffect } from 'react';
-import Auth from './Auth';
+import Auth from './components/Auth';
 import DataTable from './DataTable';
 import { supabase } from './supabaseClient';
 
