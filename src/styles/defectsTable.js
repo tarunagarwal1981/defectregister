@@ -1,0 +1,112 @@
+// src/styles/defectsTable.js
+export const styles = {
+  pageContainer: {
+    backgroundColor: '#f8fafc',
+    minHeight: '100vh',
+    padding: '24px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '32px',
+  },
+  heading: {
+    fontSize: '24px',
+    fontWeight: '600',
+    color: '#1e293b',
+    margin: 0,
+  },
+  toolbarContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+    gap: '16px',
+  },
+  searchContainer: {
+    position: 'relative',
+    flex: '1',
+  },
+  searchInput: {
+    width: '100%',
+    padding: '10px 16px 10px 40px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    fontSize: '14px',
+    outline: 'none',
+    backgroundColor: 'white',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#64748b',
+  },
+  tableWrapper: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+    overflow: 'auto',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: '14px',
+  },
+  tableHeader: {
+    padding: '12px 16px',
+    backgroundColor: '#f8fafc',
+    color: '#475569',
+    fontWeight: '500',
+    textAlign: 'left',
+    cursor: 'pointer',
+    borderBottom: '1px solid #e2e8f0',
+    whiteSpace: 'nowrap',
+  },
+  tableCell: {
+    padding: '12px 16px',
+    borderBottom: '1px solid #e2e8f0',
+    color: '#1e293b',
+  },
+  tableRow: {
+    '&:hover': {
+      backgroundColor: '#f8fafc',
+    },
+  },
+  badge: {
+    padding: '4px 8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '500',
+    color: 'white',
+  },
+  statusBadge: {
+    padding: '4px 8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '500',
+    backgroundColor: '#e2e8f0',
+    color: '#475569',
+  },
+  addButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    padding: '10px 16px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    '&:hover': {
+      backgroundColor: '#2563eb',
+    },
+  },
+  // ... more styles for modal, form elements, etc.
+};
