@@ -13,7 +13,6 @@ function App() {
       try {
         const { data: defects, error } = await supabase.from('defects register').select('*');
         if (error) throw error;
-        console.log("Data fetched:", defects);
         setData(defects);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -41,11 +40,39 @@ function App() {
       Description: '',
       'Action Planned': '',
       Criticality: '',
-      'Date Reported': '', // Keep this field empty for user input
+      'Date Reported': '',
       'Date Completed': '',
       'Status (Vessel)': '',
+      isNew: true,  // New row indicator
     };
     setData([...data, newDefect]);
+  };
+
+  const handleSaveDefect = async (defect) => {
+    try {
+      if (defect.isNew) {
+        // Insert a new row
+        const { data: newDefect, error } = await supabase
+          .from('defects register')
+          .insert([defect])
+          .single();
+        if (error) throw error;
+        
+        setData(data.map(d => d.SNo === defect.SNo ? newDefect : d));
+      } else {
+        // Update an existing row
+        const { data: updatedDefect, error } = await supabase
+          .from('defects register')
+          .update(defect)
+          .eq('SNo', defect.SNo)
+          .single();
+        if (error) throw error;
+
+        setData(data.map(d => d.SNo === defect.SNo ? updatedDefect : d));
+      }
+    } catch (error) {
+      console.error("Error saving defect:", error);
+    }
   };
 
   const handleLogout = async () => {
@@ -69,7 +96,7 @@ function App() {
           <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', right: '10px', padding: '10px 20px', backgroundColor: '#FF4D4D', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
             Logout
           </button>
-          <DataTable data={data} onAddDefect={handleAddDefect} />
+          <DataTable data={data} onAddDefect={handleAddDefect} onSaveDefect={handleSaveDefect} />
         </>
       ) : (
         <Auth onLogin={setUser} />
