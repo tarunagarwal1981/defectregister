@@ -9,19 +9,20 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check current auth status
-    const session = supabase.auth.session();
-    setUser(session?.user ?? null);
-    setLoading(false);
+    const checkAuth = async () => {
+      const session = supabase.auth.session();
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    checkAuth();
 
     // Set up auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    return () => {
-      authListener?.unsubscribe();
-    };
+    return () => authListener?.unsubscribe();
   }, []);
 
   // Loading screen while checking auth state
