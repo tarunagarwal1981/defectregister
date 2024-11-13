@@ -1,7 +1,3 @@
-# In your GitHub, create a new repository
-# Then, use Vite's template with React and TypeScript through Stackblitz or GitHub Codespaces
-
-# package.json dependencies you'll need:
 {
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
