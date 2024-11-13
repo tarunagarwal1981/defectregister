@@ -24,7 +24,6 @@ function App() {
     return () => authListener?.unsubscribe();
   }, []);
 
-  // Conditional Loading Screen
   if (loading) {
     return (
       <div
@@ -43,7 +42,6 @@ function App() {
     );
   }
 
-  // Main App Content
   return (
     <div
       style={{
