@@ -22,7 +22,7 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
       Criticality: "",
       "Date Reported": "",
       "Date Completed": "",
-      "Status (Vessel)": "",
+      "Status (Vessel)": ""
     });
     setEditingRowId(null);
     setEditedData({});
@@ -60,29 +60,6 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
 
   const validateData = (data) => {
     return data["Vessel Name"] && data.Equipments && data.Description;
-  };
-
-  const renderTableCell = (fieldName, value, isEditing, handleChange) => {
-    if (isEditing) {
-      return (
-        <td style={cellStyle}>
-          <input
-            type={fieldName.includes("Date") ? "date" : "text"}
-            value={value || ""}
-            onChange={(e) => handleChange(fieldName, e.target.value)}
-            style={{
-              width: '100%',
-              padding: '5px',
-              backgroundColor: '#2a3f5f',
-              color: '#f4f4f4',
-              border: '1px solid #4a5f81',
-              borderRadius: '4px'
-            }}
-          />
-        </td>
-      );
-    }
-    return <td style={cellStyle}>{value}</td>;
   };
 
   return (
@@ -129,9 +106,70 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
           {newRow && (
             <tr>
               <td style={cellStyle}>New</td>
-              {Object.keys(newRow).filter(key => key !== 'id').map((field) => (
-                renderTableCell(field, newRow[field], true, handleNewRowChange)
-              ))}
+              <td style={cellStyle}>
+                <input
+                  type="text"
+                  value={newRow["Vessel Name"]}
+                  onChange={(e) => handleNewRowChange("Vessel Name", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
+              <td style={cellStyle}>
+                <input
+                  type="text"
+                  value={newRow.Equipments}
+                  onChange={(e) => handleNewRowChange("Equipments", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
+              <td style={cellStyle}>
+                <input
+                  type="text"
+                  value={newRow.Description}
+                  onChange={(e) => handleNewRowChange("Description", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
+              <td style={cellStyle}>
+                <input
+                  type="text"
+                  value={newRow["Action Planned"]}
+                  onChange={(e) => handleNewRowChange("Action Planned", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
+              <td style={cellStyle}>
+                <input
+                  type="text"
+                  value={newRow.Criticality}
+                  onChange={(e) => handleNewRowChange("Criticality", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
+              <td style={cellStyle}>
+                <input
+                  type="date"
+                  value={newRow["Date Reported"]}
+                  onChange={(e) => handleNewRowChange("Date Reported", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
+              <td style={cellStyle}>
+                <input
+                  type="date"
+                  value={newRow["Date Completed"]}
+                  onChange={(e) => handleNewRowChange("Date Completed", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
+              <td style={cellStyle}>
+                <input
+                  type="text"
+                  value={newRow["Status (Vessel)"]}
+                  onChange={(e) => handleNewRowChange("Status (Vessel)", e.target.value)}
+                  style={inputStyle}
+                />
+              </td>
               <td style={cellStyle}>
                 <button onClick={handleSaveNewRowClick} style={actionButtonStyle}>
                   Save
@@ -144,42 +182,113 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
             data.map((defect, index) => (
               <tr key={defect.id}>
                 <td style={cellStyle}>{index + 1}</td>
-                {editingRowId === defect.id ? (
-                  <>
-                    {Object.keys(defect)
-                      .filter(key => key !== 'id')
-                      .map((field) => renderTableCell(
-                        field,
-                        editedData[field],
-                        true,
-                        handleInputChange
-                      ))}
-                    <td style={cellStyle}>
-                      <button onClick={handleSaveClick} style={actionButtonStyle}>
-                        Save
-                      </button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    {Object.keys(defect)
-                      .filter(key => key !== 'id')
-                      .map((field) => renderTableCell(
-                        field,
-                        defect[field],
-                        false,
-                        null
-                      ))}
-                    <td style={cellStyle}>
-                      <button
-                        onClick={() => handleEditClick(defect)}
-                        style={actionButtonStyle}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </>
-                )}
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="text"
+                      value={editedData["Vessel Name"] || ""}
+                      onChange={(e) => handleInputChange("Vessel Name", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect["Vessel Name"]
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="text"
+                      value={editedData.Equipments || ""}
+                      onChange={(e) => handleInputChange("Equipments", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect.Equipments
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="text"
+                      value={editedData.Description || ""}
+                      onChange={(e) => handleInputChange("Description", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect.Description
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="text"
+                      value={editedData["Action Planned"] || ""}
+                      onChange={(e) => handleInputChange("Action Planned", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect["Action Planned"]
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="text"
+                      value={editedData.Criticality || ""}
+                      onChange={(e) => handleInputChange("Criticality", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect.Criticality
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="date"
+                      value={editedData["Date Reported"] || ""}
+                      onChange={(e) => handleInputChange("Date Reported", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect["Date Reported"]
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="date"
+                      value={editedData["Date Completed"] || ""}
+                      onChange={(e) => handleInputChange("Date Completed", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect["Date Completed"]
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <input
+                      type="text"
+                      value={editedData["Status (Vessel)"] || ""}
+                      onChange={(e) => handleInputChange("Status (Vessel)", e.target.value)}
+                      style={inputStyle}
+                    />
+                  ) : (
+                    defect["Status (Vessel)"]
+                  )}
+                </td>
+                <td style={cellStyle}>
+                  {editingRowId === defect.id ? (
+                    <button onClick={handleSaveClick} style={actionButtonStyle}>
+                      Save
+                    </button>
+                  ) : (
+                    <button onClick={() => handleEditClick(defect)} style={actionButtonStyle}>
+                      Edit
+                    </button>
+                  )}
+                </td>
               </tr>
             ))
           ) : (
@@ -205,6 +314,15 @@ const headerStyle = {
 const cellStyle = {
   padding: '10px',
   borderBottom: '1px solid #ddd',
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: '5px',
+  backgroundColor: '#2a3f5f',
+  color: '#f4f4f4',
+  border: '1px solid #4a5f81',
+  borderRadius: '4px'
 };
 
 const actionButtonStyle = {
