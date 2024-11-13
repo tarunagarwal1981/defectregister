@@ -1,39 +1,38 @@
-// src/App.js
+// App.js
 import React, { useState, useEffect } from 'react';
-import Auth from './components/Auth';
-import DefectsTable from './components/DefectsTable';
+import Auth from './Auth';
+import DataTable from './DataTable';
 import { supabase } from './supabaseClient';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [data, setData] = useState([]);
 
   useEffect(() => {
-    const session = supabase.auth.session();
-    setUser(session?.user ?? null);
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      authListener?.unsubscribe();
+    // Fetch data here
+    const fetchData = async () => {
+      const { data, error } = await supabase.from('defects').select('*');
+      if (error) {
+        console.error('Error fetching data:', error);
+      } else {
+        setData(data);
+      }
     };
+
+    fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+  const handleAddDefect = () => {
+    // Logic for handling "Add Defect" button click, like opening a modal or redirecting
+    alert('Add Defect button clicked');
   };
 
   return (
-    <div className="App" style={{ padding: '20px' }}>
+    <div>
       {user ? (
-        <>
-          <button onClick={handleLogout} style={{ float: 'right' }}>Logout</button>
-          <DefectsTable userId={user.id} />
-        </>
+        <DataTable data={data} onAddDefect={handleAddDefect} />
       ) : (
-        <Auth onLogin={(user) => setUser(user)} />
+        <Auth onLogin={setUser} />
       )}
     </div>
   );
