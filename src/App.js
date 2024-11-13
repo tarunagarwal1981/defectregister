@@ -11,7 +11,7 @@ function App() {
   useEffect(() => {
     // Fetch data here
     const fetchData = async () => {
-      const { data, error } = await supabase.from('defects').select('*');
+      const { data, error } = await supabase.from('defects register').select('*');
       if (error) {
         console.error('Error fetching data:', error);
       } else {
