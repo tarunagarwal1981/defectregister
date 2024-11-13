@@ -1,4 +1,4 @@
-// src/components/DefectsTable/index.tsx
+// File: src/components/DefectsTable/index.tsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
