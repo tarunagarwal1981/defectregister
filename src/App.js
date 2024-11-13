@@ -35,33 +35,36 @@ function App() {
     };
   }, []);
 
+  // Loading screen while checking auth state
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh', 
-        backgroundColor: '#132337', 
-        color: '#f4f4f4' 
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundColor: '#132337',
+          color: '#f4f4f4',
+          fontFamily: 'Nunito, sans-serif',
+        }}
+      >
         Loading...
       </div>
     );
   }
 
+  // Main app content with conditional rendering based on user auth state
   return (
-    <div className="App" style={{ 
-      backgroundColor: '#132337', 
-      minHeight: '100vh', 
-      color: '#f4f4f4', 
-      fontFamily: 'Nunito, sans-serif' 
-    }}>
-      {user ? (
-        <DataTable userId={user.id} />
-      ) : (
-        <Auth onLogin={setUser} />
-      )}
+    <div
+      style={{
+        backgroundColor: '#132337',
+        minHeight: '100vh',
+        color: '#f4f4f4',
+        fontFamily: 'Nunito, sans-serif',
+      }}
+    >
+      {user ? <DataTable userId={user.id} /> : <Auth onLogin={setUser} />}
     </div>
   );
 }
