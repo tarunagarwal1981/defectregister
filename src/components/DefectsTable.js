@@ -1,30 +1,35 @@
 import React, { useState } from 'react';
 
 const DataTable = ({ data, onSaveDefect }) => {
-  const [editingId, setEditingId] = useState(null);
-  const [editedData, setEditedData] = useState({});
+  const [editingId, setEditingId] = useState(null); // Track ID of the row being edited
+  const [editedData, setEditedData] = useState({}); // Track the specific data of the row being edited
 
+  // Start editing a specific row
   const handleEdit = (row) => {
-    setEditingId(row.id);
-    setEditedData({ ...row });
+    setEditingId(row.id); // Set the ID of the row to edit
+    setEditedData({ ...row }); // Initialize editedData with the current row's data
   };
 
+  // Save changes to the current row
   const handleSave = () => {
-    onSaveDefect(editedData);
-    setEditingId(null);
-    setEditedData({});
+    onSaveDefect(editedData); // Save only the edited row data
+    setEditingId(null); // Reset editing ID
+    setEditedData({}); // Clear edited data
   };
 
+  // Handle input change for specific fields in the row being edited
   const handleChange = (field, value) => {
-    setEditedData(prev => ({
+    setEditedData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
+  // Render cell with conditional editing input
   const renderCell = (row, field, type = "text") => {
+    // Check if this row is being edited
     const isEditing = editingId === row.id;
-    
+
     if (isEditing) {
       return (
         <input
@@ -35,7 +40,7 @@ const DataTable = ({ data, onSaveDefect }) => {
         />
       );
     }
-    return row[field];
+    return row[field] || ""; // Display value in read-only mode if not editing
   };
 
   return (
@@ -112,7 +117,7 @@ const inputStyle = {
   backgroundColor: '#2a3f5f',
   color: '#f4f4f4',
   border: '1px solid #4a5f81',
-  borderRadius: '4px'
+  borderRadius: '4px',
 };
 
 const actionButtonStyle = {
