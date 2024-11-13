@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 
 const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
-  const [editingRowId, setEditingRowId] = useState(null); // Track only the row being edited
-  const [newRow, setNewRow] = useState(null); // Track the new row for adding
-  const [editedData, setEditedData] = useState({}); // Track the data being edited
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [newRow, setNewRow] = useState(null);
+  const [editedData, setEditedData] = useState({});
   const [error, setError] = useState('');
 
-  // Start editing an existing row
   const handleEditClick = (defect) => {
-    setEditingRowId(defect.id); // Set the specific row for editing
+    setEditingRowId(defect.id);
     setEditedData({ ...defect });
-    setNewRow(null); // Ensure new row is reset if editing an existing row
+    setNewRow(null);
   };
 
-  // Start adding a new row
   const handleAddRowClick = () => {
     setNewRow({
-      id: Date.now(), // Temporary ID until saved
+      id: Date.now(),
       "Vessel Name": "",
       Equipments: "",
       Description: "",
@@ -26,50 +24,65 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
       "Date Completed": "",
       "Status (Vessel)": "",
     });
-    setEditingRowId(null); // Ensure no other rows are in edit mode
+    setEditingRowId(null);
     setEditedData({});
     setError('');
   };
 
-  // Handle input changes in the editing row
   const handleInputChange = (field, value) => {
-    setEditedData((prev) => ({ ...prev, [field]: value }));
+    setEditedData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handle input changes in the new row
   const handleNewRowChange = (field, value) => {
-    setNewRow((prev) => ({ ...prev, [field]: value }));
+    setNewRow(prev => ({ ...prev, [field]: value }));
   };
 
-  // Save edited row data
   const handleSaveClick = () => {
     if (!validateData(editedData)) {
       setError('Please fill out required fields.');
       return;
     }
-
     onSaveDefect(editedData);
     setEditingRowId(null);
     setEditedData({});
     setError('');
   };
 
-  // Save new row data
   const handleSaveNewRowClick = () => {
     if (!validateData(newRow)) {
       setError('Please fill out required fields.');
       return;
     }
-
-    onSaveDefect(newRow); // Save new row to database
-    setNewRow(null); // Reset new row
+    onSaveDefect(newRow);
+    setNewRow(null);
     setError('');
   };
 
-  // Validate data to ensure all required fields are filled before saving
   const validateData = (data) => {
-    // Modify this based on required fields
     return data["Vessel Name"] && data.Equipments && data.Description;
+  };
+
+  const renderTableCell = (fieldName, value, isEditing, handleChange) => {
+    if (isEditing) {
+      return (
+        <td style={cellStyle}>
+          <input
+            type={fieldName.includes("Date") ? "date" : "text"}
+            value={value || ""}
+            onChange={(e) => handleChange(fieldName, e.target.value)}
+            style={{
+              width: '100%',
+              padding: '5px',
+              backgroundColor: '#2a3f5f',
+              color: '#f4f4f4',
+              border: '1px solid #4a5f81',
+              borderRadius: '4px'
+            }}
+          />
+        </td>
+      );
+    }
+    return <td style={cellStyle}>{value}</td>;
   };
 
   return (
@@ -91,15 +104,13 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
       </button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      <table
-        style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginTop: '10px',
-          backgroundColor: '#1b2a3a',
-          color: '#f4f4f4',
-        }}
-      >
+      <table style={{
+        width: '100%',
+        borderCollapse: 'collapse',
+        marginTop: '10px',
+        backgroundColor: '#1b2a3a',
+        color: '#f4f4f4',
+      }}>
         <thead>
           <tr>
             <th style={headerStyle}>S.No</th>
@@ -115,60 +126,57 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
           </tr>
         </thead>
         <tbody>
-          {/* Render new row if being added */}
           {newRow && (
-            <tr style={{ textAlign: 'center' }}>
-              {Object.keys(newRow).map((field, index) => (
-                field !== "id" && (
-                  <td key={index} style={cellStyle}>
-                    <input
-                      type={field.includes("Date") ? "date" : "text"}
-                      value={newRow[field]}
-                      onChange={(e) => handleNewRowChange(field, e.target.value)}
-                    />
-                  </td>
-                )
+            <tr>
+              <td style={cellStyle}>New</td>
+              {Object.keys(newRow).filter(key => key !== 'id').map((field) => (
+                renderTableCell(field, newRow[field], true, handleNewRowChange)
               ))}
               <td style={cellStyle}>
-                <button onClick={handleSaveNewRowClick} style={actionButtonStyle}>Save</button>
+                <button onClick={handleSaveNewRowClick} style={actionButtonStyle}>
+                  Save
+                </button>
               </td>
             </tr>
           )}
 
-          {/* Render existing rows */}
           {data && data.length > 0 ? (
             data.map((defect, index) => (
-              <tr key={defect.id || index} style={{ textAlign: 'center' }}>
+              <tr key={defect.id}>
                 <td style={cellStyle}>{index + 1}</td>
                 {editingRowId === defect.id ? (
                   <>
-                    {Object.keys(editedData).map((field, i) => (
-                      field !== "id" && (
-                        <td key={i} style={cellStyle}>
-                          <input
-                            type={field.includes("Date") ? "date" : "text"}
-                            value={editedData[field] || ""}
-                            onChange={(e) => handleInputChange(field, e.target.value)}
-                          />
-                        </td>
-                      )
-                    ))}
+                    {Object.keys(defect)
+                      .filter(key => key !== 'id')
+                      .map((field) => renderTableCell(
+                        field,
+                        editedData[field],
+                        true,
+                        handleInputChange
+                      ))}
                     <td style={cellStyle}>
-                      <button onClick={handleSaveClick} style={actionButtonStyle}>Save</button>
+                      <button onClick={handleSaveClick} style={actionButtonStyle}>
+                        Save
+                      </button>
                     </td>
                   </>
                 ) : (
                   <>
-                    <td style={cellStyle}>{defect["Vessel Name"]}</td>
-                    <td style={cellStyle}>{defect.Equipments}</td>
-                    <td style={cellStyle}>{defect.Description}</td>
-                    <td style={cellStyle}>{defect["Action Planned"]}</td>
-                    <td style={cellStyle}>{defect.Criticality}</td>
-                    <td style={cellStyle}>{defect["Date Reported"]}</td>
-                    <td style={cellStyle}>{defect["Date Completed"]}</td>
-                    <td style={cellStyle}>{defect["Status (Vessel)"]}</td>
+                    {Object.keys(defect)
+                      .filter(key => key !== 'id')
+                      .map((field) => renderTableCell(
+                        field,
+                        defect[field],
+                        false,
+                        null
+                      ))}
                     <td style={cellStyle}>
-                      <button onClick={() => handleEditClick(defect)} style={actionButtonStyle}>Edit</button>
+                      <button
+                        onClick={() => handleEditClick(defect)}
+                        style={actionButtonStyle}
+                      >
+                        Edit
+                      </button>
                     </td>
                   </>
                 )}
@@ -176,7 +184,9 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
             ))
           ) : (
             <tr>
-              <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No data available</td>
+              <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>
+                No data available
+              </td>
             </tr>
           )}
         </tbody>
