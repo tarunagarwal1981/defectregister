@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Auth from './components/Auth';
-import DataTable from './components/DefectsTable';
+import DataTable from './components/DataTable';
 import { supabase } from './supabaseClient';
 
 function App() {
@@ -13,6 +13,7 @@ function App() {
       try {
         const { data: defects, error } = await supabase.from('defects register').select('*');
         if (error) throw error;
+        console.log("Data fetched:", defects);
         setData(defects);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -34,6 +35,7 @@ function App() {
 
   const handleAddDefect = () => {
     const newDefect = {
+      id: null, // Temporary ID for a new defect
       SNo: data.length + 1,
       'Vessel Name': '',
       Equipments: '',
@@ -43,33 +45,48 @@ function App() {
       'Date Reported': '',
       'Date Completed': '',
       'Status (Vessel)': '',
-      isNew: true,  // New row indicator
     };
     setData([...data, newDefect]);
   };
 
-  const handleSaveDefect = async (defect) => {
+  const handleSaveDefect = async (updatedDefect) => {
     try {
-      if (defect.isNew) {
-        // Insert a new row
+      if (updatedDefect.id) {
+        // Update existing defect in the database
+        const { error } = await supabase
+          .from('defects register')
+          .update({
+            'Vessel Name': updatedDefect['Vessel Name'],
+            Equipments: updatedDefect.Equipments,
+            Description: updatedDefect.Description,
+            'Action Planned': updatedDefect['Action Planned'],
+            Criticality: updatedDefect.Criticality,
+            'Date Reported': updatedDefect['Date Reported'],
+            'Date Completed': updatedDefect['Date Completed'],
+            'Status (Vessel)': updatedDefect['Status (Vessel)'],
+          })
+          .eq('id', updatedDefect.id);
+        if (error) throw error;
+      } else {
+        // Insert a new defect into the database
         const { data: newDefect, error } = await supabase
           .from('defects register')
-          .insert([defect])
+          .insert({
+            'Vessel Name': updatedDefect['Vessel Name'],
+            Equipments: updatedDefect.Equipments,
+            Description: updatedDefect.Description,
+            'Action Planned': updatedDefect['Action Planned'],
+            Criticality: updatedDefect.Criticality,
+            'Date Reported': updatedDefect['Date Reported'],
+            'Date Completed': updatedDefect['Date Completed'],
+            'Status (Vessel)': updatedDefect['Status (Vessel)'],
+          })
           .single();
         if (error) throw error;
-        
-        setData(data.map(d => d.SNo === defect.SNo ? newDefect : d));
-      } else {
-        // Update an existing row
-        const { data: updatedDefect, error } = await supabase
-          .from('defects register')
-          .update(defect)
-          .eq('SNo', defect.SNo)
-          .single();
-        if (error) throw error;
-
-        setData(data.map(d => d.SNo === defect.SNo ? updatedDefect : d));
+        // Update the row with the real ID from the database
+        updatedDefect.id = newDefect.id;
       }
+      setData(data.map(d => (d.id === updatedDefect.id ? updatedDefect : d)));
     } catch (error) {
       console.error("Error saving defect:", error);
     }
