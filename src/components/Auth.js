@@ -20,7 +20,7 @@ const Auth = ({ onLogin }) => {
   };
 
   return (
-    <div style={{ maxWidth: '400px', textAlign: 'center' }}>
+    <div style={{ maxWidth: '400px', margin: 'auto', textAlign: 'center' }}>
       <h2>Login</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleLogin}>
@@ -30,7 +30,7 @@ const Auth = ({ onLogin }) => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ width: '100%', marginBottom: '10px', padding: '10px', borderRadius: '4px', border: '1px solid #4a90e2' }}
+          style={{ width: '100%', marginBottom: '10px', padding: '10px' }}
         />
         <input
           type="password"
@@ -38,7 +38,7 @@ const Auth = ({ onLogin }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ width: '100%', marginBottom: '20px', padding: '10px', borderRadius: '4px', border: '1px solid #4a90e2' }}
+          style={{ width: '100%', marginBottom: '20px', padding: '10px' }}
         />
         <button type="submit" style={{ width: '100%' }}>Login</button>
       </form>
