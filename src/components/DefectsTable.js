@@ -1,30 +1,82 @@
-// DataTable.js
 import React, { useState } from 'react';
 
 const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
-  const [editingRow, setEditingRow] = useState(null);
-  const [editedData, setEditedData] = useState({});
+  const [editingRowId, setEditingRowId] = useState(null); // Track only the row being edited
+  const [newRow, setNewRow] = useState(null); // Track the new row for adding
+  const [editedData, setEditedData] = useState({}); // Track the data being edited
+  const [error, setError] = useState('');
 
+  // Start editing an existing row
   const handleEditClick = (defect) => {
-    setEditingRow(defect.id);
+    setEditingRowId(defect.id); // Set the specific row for editing
     setEditedData({ ...defect });
+    setNewRow(null); // Ensure new row is reset if editing an existing row
   };
 
+  // Start adding a new row
+  const handleAddRowClick = () => {
+    setNewRow({
+      id: Date.now(), // Temporary ID until saved
+      "Vessel Name": "",
+      Equipments: "",
+      Description: "",
+      "Action Planned": "",
+      Criticality: "",
+      "Date Reported": "",
+      "Date Completed": "",
+      "Status (Vessel)": "",
+    });
+    setEditingRowId(null); // Ensure no other rows are in edit mode
+    setEditedData({});
+    setError('');
+  };
+
+  // Handle input changes in the editing row
   const handleInputChange = (field, value) => {
     setEditedData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Handle input changes in the new row
+  const handleNewRowChange = (field, value) => {
+    setNewRow((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Save edited row data
   const handleSaveClick = () => {
+    if (!validateData(editedData)) {
+      setError('Please fill out required fields.');
+      return;
+    }
+
     onSaveDefect(editedData);
-    setEditingRow(null);
+    setEditingRowId(null);
     setEditedData({});
+    setError('');
+  };
+
+  // Save new row data
+  const handleSaveNewRowClick = () => {
+    if (!validateData(newRow)) {
+      setError('Please fill out required fields.');
+      return;
+    }
+
+    onSaveDefect(newRow); // Save new row to database
+    setNewRow(null); // Reset new row
+    setError('');
+  };
+
+  // Validate data to ensure all required fields are filled before saving
+  const validateData = (data) => {
+    // Modify this based on required fields
+    return data["Vessel Name"] && data.Equipments && data.Description;
   };
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4' }}>
       <h2 style={{ color: '#f4f4f4' }}>Defects Table</h2>
       <button
-        onClick={onAddDefect}
+        onClick={handleAddRowClick}
         style={{
           padding: '10px 20px',
           margin: '10px 0',
@@ -37,6 +89,7 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
       >
         Add Defect
       </button>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <table
         style={{
@@ -62,88 +115,60 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
           </tr>
         </thead>
         <tbody>
+          {/* Render new row if being added */}
+          {newRow && (
+            <tr style={{ textAlign: 'center' }}>
+              {Object.keys(newRow).map((field, index) => (
+                field !== "id" && (
+                  <td key={index} style={cellStyle}>
+                    <input
+                      type={field.includes("Date") ? "date" : "text"}
+                      value={newRow[field]}
+                      onChange={(e) => handleNewRowChange(field, e.target.value)}
+                    />
+                  </td>
+                )
+              ))}
+              <td style={cellStyle}>
+                <button onClick={handleSaveNewRowClick} style={actionButtonStyle}>Save</button>
+              </td>
+            </tr>
+          )}
+
+          {/* Render existing rows */}
           {data && data.length > 0 ? (
             data.map((defect, index) => (
-              <tr key={index} style={{ textAlign: 'center' }}>
+              <tr key={defect.id || index} style={{ textAlign: 'center' }}>
                 <td style={cellStyle}>{index + 1}</td>
-                {editingRow === defect.id ? (
+                {editingRowId === defect.id ? (
                   <>
+                    {Object.keys(editedData).map((field, i) => (
+                      field !== "id" && (
+                        <td key={i} style={cellStyle}>
+                          <input
+                            type={field.includes("Date") ? "date" : "text"}
+                            value={editedData[field] || ""}
+                            onChange={(e) => handleInputChange(field, e.target.value)}
+                          />
+                        </td>
+                      )
+                    ))}
                     <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData['Vessel Name']}
-                        onChange={(e) => handleInputChange('Vessel Name', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData.Equipments}
-                        onChange={(e) => handleInputChange('Equipments', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData.Description}
-                        onChange={(e) => handleInputChange('Description', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData['Action Planned']}
-                        onChange={(e) => handleInputChange('Action Planned', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData.Criticality}
-                        onChange={(e) => handleInputChange('Criticality', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData['Date Reported']}
-                        onChange={(e) => handleInputChange('Date Reported', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData['Date Completed']}
-                        onChange={(e) => handleInputChange('Date Completed', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <input
-                        type="text"
-                        value={editedData['Status (Vessel)']}
-                        onChange={(e) => handleInputChange('Status (Vessel)', e.target.value)}
-                      />
-                    </td>
-                    <td style={cellStyle}>
-                      <button onClick={handleSaveClick} style={actionButtonStyle}>
-                        Save
-                      </button>
+                      <button onClick={handleSaveClick} style={actionButtonStyle}>Save</button>
                     </td>
                   </>
                 ) : (
                   <>
-                    <td style={cellStyle}>{defect['Vessel Name']}</td>
+                    <td style={cellStyle}>{defect["Vessel Name"]}</td>
                     <td style={cellStyle}>{defect.Equipments}</td>
                     <td style={cellStyle}>{defect.Description}</td>
-                    <td style={cellStyle}>{defect['Action Planned']}</td>
+                    <td style={cellStyle}>{defect["Action Planned"]}</td>
                     <td style={cellStyle}>{defect.Criticality}</td>
-                    <td style={cellStyle}>{defect['Date Reported']}</td>
-                    <td style={cellStyle}>{defect['Date Completed']}</td>
-                    <td style={cellStyle}>{defect['Status (Vessel)']}</td>
+                    <td style={cellStyle}>{defect["Date Reported"]}</td>
+                    <td style={cellStyle}>{defect["Date Completed"]}</td>
+                    <td style={cellStyle}>{defect["Status (Vessel)"]}</td>
                     <td style={cellStyle}>
-                      <button onClick={() => handleEditClick(defect)} style={actionButtonStyle}>
-                        Edit
-                      </button>
+                      <button onClick={() => handleEditClick(defect)} style={actionButtonStyle}>Edit</button>
                     </td>
                   </>
                 )}
@@ -151,9 +176,7 @@ const DataTable = ({ data, onAddDefect, onSaveDefect }) => {
             ))
           ) : (
             <tr>
-              <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>
-                No data available
-              </td>
+              <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No data available</td>
             </tr>
           )}
         </tbody>
