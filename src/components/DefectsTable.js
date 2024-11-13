@@ -1,86 +1,40 @@
-// src/components/DataTable.js
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
+// DataTable.js
+import React from 'react';
 
-const DataTable = ({ userId }) => {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: tableData, error } = await supabase
-        .from('defects') // Replace 'defects' with your actual table name
-        .select('id, vessel_name, equipment, description, action_planned, criticality, date_reported, date_completed, status');
-
-      if (error) console.error('Error fetching data:', error);
-      else setData(tableData);
-    };
-
-    fetchData();
-  }, []);
-
-  // Inline styling for the table and table elements
-  const styles = {
-    container: {
-      padding: '20px',
-      fontFamily: 'Arial, sans-serif',
-    },
-    table: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      marginTop: '20px',
-      backgroundColor: '#f4f4f4',
-    },
-    header: {
-      backgroundColor: '#132337',
-      color: '#f4f4f4',
-      textAlign: 'left',
-      padding: '12px',
-    },
-    cell: {
-      padding: '10px',
-      border: '1px solid #ddd',
-      textAlign: 'left',
-    },
-    row: {
-      backgroundColor: '#f9f9f9',
-    },
-    rowAlternate: {
-      backgroundColor: '#ffffff',
-    },
-  };
-
+const DataTable = ({ data, onAddDefect }) => {
   return (
-    <div style={styles.container}>
-      <h2>Defects Register</h2>
-      <table style={styles.table}>
+    <div>
+      <h2>Defects Table</h2>
+      <button onClick={onAddDefect} style={{ padding: '10px 20px', margin: '10px 0', backgroundColor: '#4CAF50', color: '#fff', border: 'none', cursor: 'pointer' }}>
+        Add Defect
+      </button>
+      {/* Your existing table rendering logic */}
+      <table>
         <thead>
           <tr>
-            <th style={styles.header}>S.No</th>
-            <th style={styles.header}>Vessel Name</th>
-            <th style={styles.header}>Equipments</th>
-            <th style={styles.header}>Description</th>
-            <th style={styles.header}>Action Planned</th>
-            <th style={styles.header}>Criticality</th>
-            <th style={styles.header}>Date Reported</th>
-            <th style={styles.header}>Date Completed</th>
-            <th style={styles.header}>Status (Vessel)</th>
+            <th>S.No</th>
+            <th>Vessel Name</th>
+            <th>Equipments</th>
+            <th>Description</th>
+            <th>Action Planned</th>
+            <th>Criticality</th>
+            <th>Date Reported</th>
+            <th>Date Completed</th>
+            <th>Status (Vessel)</th>
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => (
-            <tr
-              key={item.id}
-              style={index % 2 === 0 ? styles.row : styles.rowAlternate}
-            >
-              <td style={styles.cell}>{index + 1}</td>
-              <td style={styles.cell}>{item.vessel_name}</td>
-              <td style={styles.cell}>{item.equipment}</td>
-              <td style={styles.cell}>{item.description}</td>
-              <td style={styles.cell}>{item.action_planned}</td>
-              <td style={styles.cell}>{item.criticality}</td>
-              <td style={styles.cell}>{item.date_reported}</td>
-              <td style={styles.cell}>{item.date_completed}</td>
-              <td style={styles.cell}>{item.status}</td>
+          {data.map((defect, index) => (
+            <tr key={index}>
+              <td>{index + 1}</td>
+              <td>{defect.vesselName}</td>
+              <td>{defect.equipments}</td>
+              <td>{defect.description}</td>
+              <td>{defect.actionPlanned}</td>
+              <td>{defect.criticality}</td>
+              <td>{defect.dateReported}</td>
+              <td>{defect.dateCompleted}</td>
+              <td>{defect.status}</td>
             </tr>
           ))}
         </tbody>
