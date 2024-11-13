@@ -1,11 +1,17 @@
 // src/components/DefectsTable.js
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import AddDefectModal from './AddDefectModal';
+import { styles } from '../styles/defectsTable';
+import { SearchIcon, PlusIcon, LogoutIcon } from 'lucide-react';
 
 const DefectsTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newRow, setNewRow] = useState(null); // Track the new row being added
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDefect, setSelectedDefect] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   const columns = [
     'S.No',
@@ -24,184 +30,167 @@ const DefectsTable = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: tableData, error } = await supabase
-      .from('defects register')
-      .select('*');
+    try {
+      const { data: tableData, error } = await supabase
+        .from('defects register')
+        .select('*');
 
-    if (error) {
-      console.error('Error fetching data:', error);
-    } else {
+      if (error) throw error;
       setData(tableData || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const handleAddRow = async () => {
-    const { data: newData, error } = await supabase
-      .from('defects register')
-      .insert([newRow]);
+  const handleAddDefect = async (defectData) => {
+    try {
+      const { data: newData, error } = await supabase
+        .from('defects register')
+        .insert([defectData]);
 
-    if (error) {
-      console.error('Error adding row:', error);
-    } else {
+      if (error) throw error;
       setData([...data, ...newData]);
-      setNewRow(null); // Clear new row fields after adding
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error adding defect:', error);
     }
   };
 
   const handleLogout = () => {
-    // Implement actual logout logic here
     supabase.auth.signOut();
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = React.useMemo(() => {
+    if (!sortConfig.key) return data;
+
+    return [...data].sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [data, sortConfig]);
+
+  const filteredData = sortedData.filter(item =>
+    Object.values(item).some(value =>
+      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  const getCriticalityColor = (criticality) => {
+    const colors = {
+      'High': '#ef4444',
+      'Medium': '#f59e0b',
+      'Low': '#10b981',
+    };
+    return colors[criticality] || '#6b7280';
   };
 
   return (
     <div style={styles.pageContainer}>
       <div style={styles.header}>
         <h1 style={styles.heading}>Defects Register</h1>
-        <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
+        <button onClick={handleLogout} style={styles.logoutButton}>
+          <LogoutIcon size={16} />
+          <span>Logout</span>
+        </button>
+      </div>
+
+      <div style={styles.toolbarContainer}>
+        <div style={styles.searchContainer}>
+          <SearchIcon size={20} style={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search defects..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+        <button 
+          onClick={() => setIsModalOpen(true)} 
+          style={styles.addButton}
+        >
+          <PlusIcon size={20} />
+          <span>Add New Defect</span>
+        </button>
       </div>
 
       {loading ? (
-        <p style={styles.loadingText}>Loading data...</p>
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingSpinner} />
+          <p>Loading data...</p>
+        </div>
       ) : (
-        <div style={styles.tableContainer}>
+        <div style={styles.tableWrapper}>
           <table style={styles.table}>
             <thead>
               <tr>
                 {columns.map((col) => (
-                  <th key={col} style={styles.tableHeader}>{col}</th>
+                  <th 
+                    key={col} 
+                    style={styles.tableHeader}
+                    onClick={() => handleSort(col)}
+                  >
+                    {col}
+                    {sortConfig.key === col && (
+                      <span style={styles.sortIndicator}>
+                        {sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}
+                      </span>
+                    )}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {data.map((row, index) => (
+              {filteredData.map((row, index) => (
                 <tr key={index} style={styles.tableRow}>
                   {columns.map((col) => (
-                    <td key={col} style={styles.tableCell}>{row[col]}</td>
+                    <td key={col} style={styles.tableCell}>
+                      {col === 'Criticality' ? (
+                        <span style={{
+                          ...styles.badge,
+                          backgroundColor: getCriticalityColor(row[col])
+                        }}>
+                          {row[col]}
+                        </span>
+                      ) : col === 'Status (Vessel)' ? (
+                        <span style={styles.statusBadge}>
+                          {row[col]}
+                        </span>
+                      ) : row[col]}
+                    </td>
                   ))}
                 </tr>
               ))}
-              {newRow && (
-                <tr>
-                  {columns.map((col) => (
-                    <td key={col} style={styles.tableCell}>
-                      <input
-                        type="text"
-                        placeholder={col}
-                        value={newRow[col] || ''}
-                        onChange={(e) => setNewRow({ ...newRow, [col]: e.target.value })}
-                        style={styles.input}
-                      />
-                    </td>
-                  ))}
-                  <td style={styles.tableCell}>
-                    <button onClick={handleAddRow} style={styles.saveButton}>Save</button>
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
-          {!newRow && (
-            <button onClick={() => setNewRow({})} style={styles.addButton}>+</button>
-          )}
         </div>
       )}
+
+      <AddDefectModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAdd={handleAddDefect}
+        columns={columns}
+      />
     </div>
   );
 };
-
-const styles = {
-  pageContainer: {
-    backgroundColor: '#132337',
-    fontFamily: 'Nunito, sans-serif',
-    color: '#f4f4f4',
-    minHeight: '100vh',
-    padding: '20px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: '1200px',
-  },
-  heading: {
-    fontSize: '36px',
-    color: '#f4f4f4',
-  },
-  logoutButton: {
-    backgroundColor: '#4a90e2',
-    color: '#f4f4f4',
-    border: 'none',
-    padding: '10px 20px',
-    fontSize: '14px',
-    cursor: 'pointer',
-    borderRadius: '4px',
-  },
-  tableContainer: {
-    marginTop: '20px',
-    width: '100%',
-    maxWidth: '1200px',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  tableHeader: {
-    fontSize: '14px',
-    fontWeight: 'bold',
-    padding: '10px',
-    backgroundColor: '#1b3a57',
-    color: '#f4f4f4',
-    borderBottom: '1px solid #f4f4f4',
-    textAlign: 'left',
-  },
-  tableRow: {
-    backgroundColor: '#132337',
-    color: '#f4f4f4',
-  },
-  tableCell: {
-    padding: '10px',
-    borderBottom: '1px solid #f4f4f4',
-    textAlign: 'left',
-    fontSize: '14px',
-  },
-  addButton: {
-    backgroundColor: '#4a90e2',
-    color: '#f4f4f4',
-    border: 'none',
-    fontSize: '24px',
-    padding: '5px 10px',
-    cursor: 'pointer',
-    borderRadius: '50%',
-    marginTop: '10px',
-    alignSelf: 'center',
-  },
-  input: {
-    padding: '8px',
-    fontSize: '14px',
-    borderRadius: '4px',
-    border: '1px solid #f4f4f4',
-    backgroundColor: '#1b3a57',
-    color: '#f4f4f4',
-    width: '100%',
-  },
-  saveButton: {
-    backgroundColor: '#4a90e2',
-    color: '#f4f4f4',
-    border: 'none',
-    fontSize: '14px',
-    padding: '5px 10px',
-    cursor: 'pointer',
-    borderRadius: '4px',
-  },
-};
-
-export default DefectsTable;
