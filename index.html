@@ -1,5 +1,5 @@
 // index.html
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,6 +11,32 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
+// src/vite-env.d.ts
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_SUPABASE_URL: string
+  readonly VITE_SUPABASE_ANON_KEY: string
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
+
+// src/App.tsx
+import React from 'react'
+import DefectsTable from './components/DefectsTable'
+
+function App() {
+  return (
+    <div className="min-h-screen bg-[#132337] p-4">
+      <DefectsTable />
+    </div>
+  )
+}
+
+export default App
 
 // src/main.tsx
 import React from 'react'
@@ -35,96 +61,3 @@ body {
   background-color: #132337;
   color: #f4f4f4;
 }
-
-// src/App.tsx
-import React from 'react'
-import DefectsTable from './components/DefectsTable'
-
-function App() {
-  return (
-    <div className="min-h-screen bg-[#132337] p-4">
-      <DefectsTable />
-    </div>
-  )
-}
-
-export default App
-
-// src/components/DefectsTable/index.tsx
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-
-const DefectsTable = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const { data: result } = await supabase
-        .from('defects register')
-        .select('*');
-      setData(result || []);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center py-10">Loading...</div>;
-  }
-
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Defects Register</h1>
-      <div className="rounded-lg overflow-hidden">
-        <table className="min-w-full bg-[#1a2c42]">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                S.No
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Vessel Name
-              </th>
-              {/* Add other columns as needed */}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row: any) => (
-              <tr key={row['S.No']} className="border-t border-gray-700">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {row['S.No']}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {row['Vessel Name']}
-                </td>
-                {/* Add other columns as needed */}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
-export default DefectsTable;
-
-// src/lib/supabase.ts
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseKey);
