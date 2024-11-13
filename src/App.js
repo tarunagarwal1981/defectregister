@@ -1,3 +1,4 @@
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import Auth from './Auth';
 import DataTable from './components/DefectsTable';
@@ -8,69 +9,56 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check current auth session
-    const checkSession = async () => {
+    // Check current auth status
+    const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = supabase.auth.session();
         setUser(session?.user ?? null);
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error('Error checking auth status:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    checkSession();
+    checkAuth();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
     return () => {
-      if (subscription) subscription.unsubscribe();
+      if (authListener?.unsubscribe) {
+        authListener.unsubscribe();
+      }
     };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#132337', color: '#f4f4f4' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        backgroundColor: '#132337', 
+        color: '#f4f4f4' 
+      }}>
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="App" style={{ backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4', fontFamily: 'Nunito, sans-serif' }}>
+    <div className="App" style={{ 
+      backgroundColor: '#132337', 
+      minHeight: '100vh', 
+      color: '#f4f4f4', 
+      fontFamily: 'Nunito, sans-serif' 
+    }}>
       {user ? (
-        <>
-          <button 
-            onClick={handleLogout} 
-            style={{ 
-              backgroundColor: '#4a90e2', 
-              color: '#f4f4f4', 
-              border: 'none', 
-              padding: '10px 20px', 
-              fontSize: '16px', 
-              cursor: 'pointer', 
-              borderRadius: '4px', 
-              margin: '10px' 
-            }}
-          >
-            Logout
-          </button>
-          <DataTable userId={user.id} />
-        </>
+        <DataTable userId={user.id} />
       ) : (
         <Auth onLogin={setUser} />
       )}
