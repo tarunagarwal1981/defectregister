@@ -1,7 +1,7 @@
 // src/components/DefectsTable.js
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import DefectModal from './DefectModal';
+import DefectModal from './AddDefectModal';
 import { styles } from '../styles/defectsTable';
 
 const DefectsTable = () => {
