@@ -26,10 +26,10 @@ function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="App" style={{ padding: '20px' }}>
       {user ? (
         <>
-          <button onClick={handleLogout} style={{ alignSelf: 'flex-end', margin: '20px' }}>Logout</button>
+          <button onClick={handleLogout} style={{ float: 'right' }}>Logout</button>
           <DefectsTable userId={user.id} />
         </>
       ) : (
