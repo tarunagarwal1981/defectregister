@@ -3,6 +3,14 @@ import React from 'react';
 const DataTable = ({ data, onAddDefect }) => {
   console.log('Data received by DataTable:', data);
 
+  const renderCell = (field, value, index) => {
+    if (index === data.length - 1 && value === '') {
+      // Render an input for new, empty fields in the newly added row
+      return <input type="text" placeholder={`Enter ${field}`} style={inputStyle} />;
+    }
+    return value;
+  };
+
   return (
     <div style={{ padding: '20px', backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4' }}>
       <h2 style={{ color: '#f4f4f4' }}>Defects Table</h2>
@@ -21,7 +29,6 @@ const DataTable = ({ data, onAddDefect }) => {
         Add Defect
       </button>
 
-      {/* Table */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', backgroundColor: '#1b2a3a', color: '#f4f4f4' }}>
         <thead>
           <tr>
@@ -41,14 +48,14 @@ const DataTable = ({ data, onAddDefect }) => {
             data.map((defect, index) => (
               <tr key={index} style={{ textAlign: 'center' }}>
                 <td style={cellStyle}>{defect.SNo}</td>
-                <td style={cellStyle}>{defect['Vessel Name']}</td>
-                <td style={cellStyle}>{defect.Equipments}</td>
-                <td style={cellStyle}>{defect.Description}</td>
-                <td style={cellStyle}>{defect['Action Planned']}</td>
-                <td style={cellStyle}>{defect.Criticality}</td>
-                <td style={cellStyle}>{defect['Date Reported']}</td>
-                <td style={cellStyle}>{defect['Date Completed']}</td>
-                <td style={cellStyle}>{defect['Status (Vessel)']}</td>
+                <td style={cellStyle}>{renderCell('Vessel Name', defect['Vessel Name'], index)}</td>
+                <td style={cellStyle}>{renderCell('Equipments', defect.Equipments, index)}</td>
+                <td style={cellStyle}>{renderCell('Description', defect.Description, index)}</td>
+                <td style={cellStyle}>{renderCell('Action Planned', defect['Action Planned'], index)}</td>
+                <td style={cellStyle}>{renderCell('Criticality', defect.Criticality, index)}</td>
+                <td style={cellStyle}>{renderCell('Date Reported', defect['Date Reported'], index)}</td>
+                <td style={cellStyle}>{renderCell('Date Completed', defect['Date Completed'], index)}</td>
+                <td style={cellStyle}>{renderCell('Status (Vessel)', defect['Status (Vessel)'], index)}</td>
               </tr>
             ))
           ) : (
@@ -64,7 +71,6 @@ const DataTable = ({ data, onAddDefect }) => {
   );
 };
 
-// Inline styles for table headers and cells
 const headerStyle = {
   padding: '10px',
   backgroundColor: '#3A506B',
@@ -75,6 +81,14 @@ const headerStyle = {
 const cellStyle = {
   padding: '8px',
   borderBottom: '1px solid #4a4a4a',
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: '4px',
+  color: '#333',
+  borderRadius: '4px',
+  border: '1px solid #ccc',
 };
 
 export default DataTable;
