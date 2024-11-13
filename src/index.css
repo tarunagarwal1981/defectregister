@@ -4,14 +4,11 @@ body {
   color: #f4f4f4;
   font-family: 'Nunito', sans-serif;
   margin: 0;
-  padding: 0;
 }
 button {
   background-color: #4a90e2;
-  color: #f4f4f4;
-  border: none;
-  padding: 8px 16px;
-  font-size: 16px;
-  border-radius: 4px;
+  color: white;
+  padding: 10px;
   cursor: pointer;
+  border-radius: 5px;
 }
