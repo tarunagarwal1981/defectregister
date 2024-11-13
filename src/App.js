@@ -34,9 +34,18 @@ function App() {
   }, []);
 
   const handleAddDefect = () => {
-    // Implement your add defect logic here
-    console.log("Add Defect button clicked");
-    // For example, you might open a modal or navigate to a defect form page.
+    const newDefect = {
+      SNo: data.length + 1,
+      'Vessel Name': '',
+      Equipments: '',
+      Description: '',
+      'Action Planned': '',
+      Criticality: '',
+      'Date Reported': '', // Keep this field empty for user input
+      'Date Completed': '',
+      'Status (Vessel)': '',
+    };
+    setData([...data, newDefect]);
   };
 
   const handleLogout = async () => {
