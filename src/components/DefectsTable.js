@@ -3,14 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import AddDefectModal from './AddDefectModal';
 import { styles } from '../styles/defectsTable';
-import { SearchIcon, PlusIcon, LogoutIcon } from 'lucide-react';
 
 const DefectsTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDefect, setSelectedDefect] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   const columns = [
@@ -94,28 +92,17 @@ const DefectsTable = () => {
     )
   );
 
-  const getCriticalityColor = (criticality) => {
-    const colors = {
-      'High': '#ef4444',
-      'Medium': '#f59e0b',
-      'Low': '#10b981',
-    };
-    return colors[criticality] || '#6b7280';
-  };
-
   return (
     <div style={styles.pageContainer}>
       <div style={styles.header}>
         <h1 style={styles.heading}>Defects Register</h1>
         <button onClick={handleLogout} style={styles.logoutButton}>
-          <LogoutIcon size={16} />
-          <span>Logout</span>
+          Logout
         </button>
       </div>
 
       <div style={styles.toolbarContainer}>
         <div style={styles.searchContainer}>
-          <SearchIcon size={20} style={styles.searchIcon} />
           <input
             type="text"
             placeholder="Search defects..."
@@ -128,8 +115,7 @@ const DefectsTable = () => {
           onClick={() => setIsModalOpen(true)} 
           style={styles.addButton}
         >
-          <PlusIcon size={20} />
-          <span>Add New Defect</span>
+          Add New Defect
         </button>
       </div>
 
@@ -152,7 +138,7 @@ const DefectsTable = () => {
                     {col}
                     {sortConfig.key === col && (
                       <span style={styles.sortIndicator}>
-                        {sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}
+                        {sortConfig.direction === 'asc' ? ' ▲' : ' ▼'}
                       </span>
                     )}
                   </th>
@@ -167,7 +153,10 @@ const DefectsTable = () => {
                       {col === 'Criticality' ? (
                         <span style={{
                           ...styles.badge,
-                          backgroundColor: getCriticalityColor(row[col])
+                          backgroundColor: 
+                            row[col]?.toLowerCase() === 'high' ? '#ef4444' :
+                            row[col]?.toLowerCase() === 'medium' ? '#f59e0b' :
+                            row[col]?.toLowerCase() === 'low' ? '#10b981' : '#6b7280'
                         }}>
                           {row[col]}
                         </span>
@@ -194,3 +183,5 @@ const DefectsTable = () => {
     </div>
   );
 };
+
+export default DefectsTable;
