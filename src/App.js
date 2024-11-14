@@ -42,15 +42,15 @@ function App() {
 
   // Combined fetch operations on login
   useEffect(() => {
-  const fetchUserData = async () => {
-    if (user) {
-      await fetchAssignedVessels();
-      await fetchData();
-    }
-  };
-
-  fetchUserData();
-}, [user, fetchAssignedVessels, fetchData]);
+    const fetchUserData = async () => {
+      if (user) {
+        await fetchAssignedVessels();
+        await fetchData();
+      }
+    };
+  
+    fetchUserData();
+  }, [user, fetchAssignedVessels, fetchData]);
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
