@@ -9,61 +9,51 @@ function App() {
   const [assignedVessels, setAssignedVessels] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch defects data for assigned vessels
-  const fetchData = async () => {
-    try {
-      const { data: defects, error } = await supabase
-        .from('defects register')
-        .select('*');
-      if (error) throw error;
-      setData(defects);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch vessels assigned to the logged-in user
-  const fetchAssignedVessels = async () => {
-    try {
-      const { data: vessels, error } = await supabase
-        .from('user_vessels')
-        .select('vessel_name')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      setAssignedVessels(vessels.map(v => v.vessel_name));
-    } catch (error) {
-      console.error("Error fetching assigned vessels:", error);
-    }
-  };
-
   useEffect(() => {
     const fetchUserData = async () => {
-      if (user) {
-        setLoading(true);
-        await fetchAssignedVessels();
-        await fetchData();
+      try {
+        // Fetch assigned vessels for the logged-in user
+        const { data: vessels, error: vesselsError } = await supabase
+          .from('user_vessels')
+          .select('vessel_name')
+          .eq('user_id', user?.id);
+
+        if (vesselsError) throw vesselsError;
+        setAssignedVessels(vessels.map(v => v.vessel_name));
+
+        // Fetch defect data based on assigned vessels
+        const { data: defects, error: defectsError } = await supabase
+          .from('defects register')
+          .select('*');
+
+        if (defectsError) throw defectsError;
+        setData(defects);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
         setLoading(false);
       }
     };
 
-    // Listen for authentication state changes
+    if (user) {
+      setLoading(true);
+      fetchUserData();
+    }
+
+    // Set up authentication state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    fetchUserData();
-
     return () => {
-      authListener?.unsubscribe();
+      if (authListener) authListener.unsubscribe();
     };
   }, [user]);
 
-  // Handle adding a new defect
+  // Handle adding a new defect entry
   const handleAddDefect = () => {
     const newDefect = {
-      id: null, // Temporary ID for the new defect
+      id: null, // Temporary ID for new defect
       SNo: data.length + 1,
       'Vessel Name': '',
       Equipments: '',
@@ -77,7 +67,7 @@ function App() {
     setData([...data, newDefect]);
   };
 
-  // Save defect to the database
+  // Save defect entry to the database
   const handleSaveDefect = async (updatedDefect) => {
     try {
       if (updatedDefect.id) {
@@ -112,15 +102,16 @@ function App() {
           })
           .single();
         if (error) throw error;
-        updatedDefect.id = newDefect.id; // Update local state with new defect ID
+        updatedDefect.id = newDefect.id;
       }
-      fetchData(); // Refresh data
+      // Refresh data to reflect saved changes
+      setData((prevData) => prevData.map(d => (d.id === updatedDefect.id ? updatedDefect : d)));
     } catch (error) {
       console.error("Error saving defect:", error);
     }
   };
 
-  // Logout functionality
+  // Logout function
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Error logging out:", error);
@@ -142,11 +133,11 @@ function App() {
           <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', right: '10px', padding: '10px 20px', backgroundColor: '#FF4D4D', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
             Logout
           </button>
-          <DataTable 
-            data={data} 
-            assignedVessels={assignedVessels} 
-            onAddDefect={handleAddDefect} 
-            onSaveDefect={handleSaveDefect} 
+          <DataTable
+            data={data}
+            onAddDefect={handleAddDefect}
+            onSaveDefect={handleSaveDefect}
+            assignedVessels={assignedVessels}
           />
         </>
       ) : (
