@@ -1,45 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import React from 'react';
 
 const DefectsTable = ({ 
   data, 
   onAddDefect, 
   onSaveDefect, 
-  vessels, 
+  vessels,
+  vesselNames,
   loading,
   editingId,
   editedDefect,
   setEditingId,
   setEditedDefect 
 }) => {
-  const [vesselNames, setVesselNames] = useState({});
-
-  // Fetch vessel names for the assigned vessels
-  useEffect(() => {
-    const fetchVesselNames = async () => {
-      try {
-        if (vessels.length === 0) return;
-        
-        const { data: vesselData, error } = await supabase
-          .from('vessels')
-          .select('vessel_id, vessel_name')
-          .in('vessel_id', vessels);
-        
-        if (error) throw error;
-        
-        const namesMap = vesselData.reduce((acc, vessel) => {
-          acc[vessel.vessel_id] = vessel.vessel_name;
-          return acc;
-        }, {});
-        
-        setVesselNames(namesMap);
-      } catch (error) {
-        console.error('Error fetching vessel names:', error);
-      }
-    };
-
-    fetchVesselNames();
-  }, [vessels]);
+  const handleEdit = (defect) => {
+    setEditingId(defect.id);
+    setEditedDefect({ ...defect });
+  };
 
   const handleChange = (field, value) => {
     if (editedDefect) {
@@ -53,189 +29,206 @@ const DefectsTable = ({
   };
 
   const handleSave = async () => {
-    if (editedDefect) {
-      await onSaveDefect(editedDefect);
-      setEditingId(null);
-      setEditedDefect(null);
+    if (!editedDefect?.vessel_id) {
+      alert('Please select a vessel');
+      return;
     }
+    await onSaveDefect(editedDefect);
   };
+
+  if (loading) {
+    return (
+      <div className="table-wrapper">
+        <div className="loading-state">Loading defects...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="table-wrapper">
       <h1 className="title">Defects Register</h1>
 
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>S.No</th>
-              <th>Vessel Name</th>
-              <th>Equipments</th>
-              <th>Description</th>
-              <th>Action Planned</th>
-              <th>Criticality</th>
-              <th>Date Reported</th>
-              <th>Date Completed</th>
-              <th>Status (Vessel)</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((defect) => (
-              <tr key={defect.id} className={editingId === defect.id ? 'editing' : ''}>
-                <td>{defect.SNo}</td>
-                <td>
-                  {editingId === defect.id ? (
-                    <select
-                      value={editedDefect?.vessel_id || ''}
-                      onChange={(e) => handleChange('vessel_id', e.target.value)}
-                      required
-                      className="form-input"
-                    >
-                      <option value="">Select Vessel</option>
-                      {Object.entries(vesselNames).map(([id, name]) => (
-                        <option key={id} value={id}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    vesselNames[defect.vessel_id] || 'Loading...'
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <input
-                      type="text"
-                      value={editedDefect?.Equipments || ''}
-                      onChange={(e) => handleChange('Equipments', e.target.value)}
-                      required
-                      className="form-input"
-                      placeholder="Enter equipment"
-                    />
-                  ) : (
-                    defect.Equipments
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <textarea
-                      value={editedDefect?.Description || ''}
-                      onChange={(e) => handleChange('Description', e.target.value)}
-                      required
-                      className="form-input"
-                      placeholder="Enter description"
-                    />
-                  ) : (
-                    defect.Description
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <textarea
-                      value={editedDefect?.['Action Planned'] || ''}
-                      onChange={(e) => handleChange('Action Planned', e.target.value)}
-                      required
-                      className="form-input"
-                      placeholder="Enter planned action"
-                    />
-                  ) : (
-                    defect['Action Planned']
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <select
-                      value={editedDefect?.Criticality || ''}
-                      onChange={(e) => handleChange('Criticality', e.target.value)}
-                      required
-                      className="form-input"
-                    >
-                      <option value="">Select Criticality</option>
-                      <option value="High">High</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Low">Low</option>
-                    </select>
-                  ) : (
-                    defect.Criticality
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <input
-                      type="date"
-                      value={editedDefect?.['Date Reported'] || ''}
-                      onChange={(e) => handleChange('Date Reported', e.target.value)}
-                      required
-                      className="form-input"
-                    />
-                  ) : (
-                    defect['Date Reported']
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <input
-                      type="date"
-                      value={editedDefect?.['Date Completed'] || ''}
-                      onChange={(e) => handleChange('Date Completed', e.target.value)}
-                      className="form-input"
-                    />
-                  ) : (
-                    defect['Date Completed']
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <select
-                      value={editedDefect?.['Status (Vessel)'] || ''}
-                      onChange={(e) => handleChange('Status (Vessel)', e.target.value)}
-                      required
-                      className="form-input"
-                    >
-                      <option value="">Select Status</option>
-                      <option value="Open">Open</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  ) : (
-                    defect['Status (Vessel)']
-                  )}
-                </td>
-                <td>
-                  {editingId === defect.id ? (
-                    <div className="action-buttons">
-                      <button onClick={handleSave} className="save-button">
-                        Save
-                      </button>
-                      <button onClick={handleCancel} className="cancel-button">
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => {
-                      setEditingId(defect.id);
-                      setEditedDefect({ ...defect });
-                    }} className="edit-button">
-                      Edit
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {vessels.length === 0 ? (
+        <div className="no-vessels-message">
+          No vessels are assigned to you. Please contact your administrator.
+        </div>
+      ) : (
+        <>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>S.No</th>
+                  <th>Vessel Name</th>
+                  <th>Equipments</th>
+                  <th>Description</th>
+                  <th>Action Planned</th>
+                  <th>Criticality</th>
+                  <th>Date Reported</th>
+                  <th>Date Completed</th>
+                  <th>Status (Vessel)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((defect) => (
+                  <tr key={defect.id} className={editingId === defect.id ? 'editing' : ''}>
+                    <td>{defect.SNo}</td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <select
+                          value={editedDefect?.vessel_id || ''}
+                          onChange={(e) => handleChange('vessel_id', e.target.value)}
+                          required
+                          className="form-input"
+                        >
+                          <option value="">Select Vessel</option>
+                          {vessels.map((vesselId) => (
+                            <option key={vesselId} value={vesselId}>
+                              {vesselNames[vesselId] || 'Loading...'}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        vesselNames[defect.vessel_id] || 'Unknown Vessel'
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <input
+                          type="text"
+                          value={editedDefect?.Equipments || ''}
+                          onChange={(e) => handleChange('Equipments', e.target.value)}
+                          required
+                          className="form-input"
+                          placeholder="Enter equipment"
+                        />
+                      ) : (
+                        defect.Equipments
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <textarea
+                          value={editedDefect?.Description || ''}
+                          onChange={(e) => handleChange('Description', e.target.value)}
+                          required
+                          className="form-input"
+                          placeholder="Enter description"
+                        />
+                      ) : (
+                        <div className="description-cell">{defect.Description}</div>
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <textarea
+                          value={editedDefect?.['Action Planned'] || ''}
+                          onChange={(e) => handleChange('Action Planned', e.target.value)}
+                          required
+                          className="form-input"
+                          placeholder="Enter planned action"
+                        />
+                      ) : (
+                        <div className="action-cell">{defect['Action Planned']}</div>
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <select
+                          value={editedDefect?.Criticality || ''}
+                          onChange={(e) => handleChange('Criticality', e.target.value)}
+                          required
+                          className="form-input"
+                        >
+                          <option value="">Select Criticality</option>
+                          <option value="High">High</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Low">Low</option>
+                        </select>
+                      ) : (
+                        <span className={`criticality ${defect.Criticality?.toLowerCase()}`}>
+                          {defect.Criticality}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <input
+                          type="date"
+                          value={editedDefect?.['Date Reported'] || ''}
+                          onChange={(e) => handleChange('Date Reported', e.target.value)}
+                          required
+                          className="form-input"
+                        />
+                      ) : (
+                        defect['Date Reported']
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <input
+                          type="date"
+                          value={editedDefect?.['Date Completed'] || ''}
+                          onChange={(e) => handleChange('Date Completed', e.target.value)}
+                          className="form-input"
+                        />
+                      ) : (
+                        defect['Date Completed']
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <select
+                          value={editedDefect?.['Status (Vessel)'] || ''}
+                          onChange={(e) => handleChange('Status (Vessel)', e.target.value)}
+                          required
+                          className="form-input"
+                        >
+                          <option value="">Select Status</option>
+                          <option value="Open">Open</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Completed">Completed</option>
+                        </select>
+                      ) : (
+                        <span className={`status ${defect['Status (Vessel)']?.toLowerCase().replace(' ', '-')}`}>
+                          {defect['Status (Vessel)']}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {editingId === defect.id ? (
+                        <div className="action-buttons">
+                          <button onClick={handleSave} className="save-button">
+                            Save
+                          </button>
+                          <button onClick={handleCancel} className="cancel-button">
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => handleEdit(defect)} className="edit-button">
+                          Edit
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      <div className="footer">
-        <button 
-          onClick={onAddDefect}
-          className="add-button"
-          disabled={loading}
-        >
-          Add Defect
-        </button>
-      </div>
+          <div className="footer">
+            <button 
+              onClick={onAddDefect}
+              className="add-button"
+              disabled={loading || vessels.length === 0}
+            >
+              Add Defect
+            </button>
+          </div>
+        </>
+      )}
 
       <style jsx>{`
         .table-wrapper {
@@ -246,6 +239,15 @@ const DefectsTable = ({
         .title {
           margin-bottom: 20px;
           font-size: 24px;
+        }
+
+        .loading-state,
+        .no-vessels-message {
+          text-align: center;
+          padding: 40px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+          margin: 20px 0;
         }
 
         .table-container {
@@ -270,10 +272,18 @@ const DefectsTable = ({
         th {
           background-color: rgba(255, 255, 255, 0.1);
           font-weight: bold;
+          white-space: nowrap;
         }
 
         tr.editing {
           background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .description-cell,
+        .action-cell {
+          max-width: 200px;
+          white-space: pre-wrap;
+          word-break: break-word;
         }
 
         .form-input {
@@ -285,14 +295,56 @@ const DefectsTable = ({
           color: white;
         }
 
+        textarea.form-input {
+          min-height: 80px;
+          resize: vertical;
+        }
+
         .form-input:focus {
           outline: none;
           border-color: #1a73e8;
         }
 
-        textarea.form-input {
-          min-height: 80px;
-          resize: vertical;
+        .criticality {
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-weight: 500;
+        }
+
+        .criticality.high {
+          background-color: rgba(244, 67, 54, 0.2);
+          color: #ff7875;
+        }
+
+        .criticality.medium {
+          background-color: rgba(255, 193, 7, 0.2);
+          color: #ffd666;
+        }
+
+        .criticality.low {
+          background-color: rgba(76, 175, 80, 0.2);
+          color: #95de64;
+        }
+
+        .status {
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-weight: 500;
+        }
+
+        .status.open {
+          background-color: rgba(244, 67, 54, 0.2);
+          color: #ff7875;
+        }
+
+        .status.in-progress {
+          background-color: rgba(255, 193, 7, 0.2);
+          color: #ffd666;
+        }
+
+        .status.completed {
+          background-color: rgba(76, 175, 80, 0.2);
+          color: #95de64;
         }
 
         .footer {
@@ -323,13 +375,16 @@ const DefectsTable = ({
           gap: 5px;
         }
 
-        .edit-button, .save-button, .cancel-button {
+        .edit-button,
+        .save-button,
+        .cancel-button {
           padding: 6px 12px;
           border: none;
           border-radius: 4px;
           cursor: pointer;
           font-size: 14px;
           transition: all 0.2s;
+          white-space: nowrap;
         }
 
         .edit-button {
@@ -345,6 +400,11 @@ const DefectsTable = ({
         .cancel-button {
           background-color: #f44336;
           color: white;
+        }
+
+        button:hover:not(:disabled) {
+          opacity: 0.9;
+          transform: translateY(-1px);
         }
 
         button:disabled {
