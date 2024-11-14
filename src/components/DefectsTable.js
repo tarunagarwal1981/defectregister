@@ -1,40 +1,58 @@
-// DataTable.js
 import React, { useState } from 'react';
 
-const DataTable = ({ data, onSaveDefect, onAddDefect }) => {
+const DataTable = ({ data, vessels, onSaveDefect, onAddDefect }) => {
   const [editingId, setEditingId] = useState(null);
   const [editedData, setEditedData] = useState({});
 
+  // Handle initiating edit mode
   const handleEdit = (row) => {
     setEditingId(row.id);
     setEditedData({ ...row });
   };
 
+  // Handle saving edits or new defect entries
   const handleSave = () => {
     onSaveDefect(editedData);
     setEditingId(null);
     setEditedData({});
   };
 
+  // Add a new row for defect entry
   const handleAdd = () => {
     onAddDefect();
   };
 
+  // Track changes in the edited input fields
   const handleChange = (field, value) => {
-    setEditedData(prev => ({
+    setEditedData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const renderCell = (row, field, type = "text") => {
+  // Render cells for edit or display based on edit mode
+  const renderCell = (row, field, type = 'text') => {
     const isEditing = editingId === row.id;
-
-    if (isEditing) {
+    if (field === 'Vessel Name' && isEditing) {
+      return (
+        <select
+          value={editedData[field] || ''}
+          onChange={(e) => handleChange(field, e.target.value)}
+          style={inputStyle}
+        >
+          <option value="">Select Vessel</option>
+          {vessels.map((vessel) => (
+            <option key={vessel} value={vessel}>
+              {vessel}
+            </option>
+          ))}
+        </select>
+      );
+    } else if (isEditing) {
       return (
         <input
           type={type}
-          value={editedData[field] || ""}
+          value={editedData[field] || ''}
           onChange={(e) => handleChange(field, e.target.value)}
           style={inputStyle}
         />
@@ -73,14 +91,14 @@ const DataTable = ({ data, onSaveDefect, onAddDefect }) => {
           {data.map((row, index) => (
             <tr key={row.id}>
               <td style={cellStyle}>{index + 1}</td>
-              <td style={cellStyle}>{renderCell(row, "Vessel Name")}</td>
-              <td style={cellStyle}>{renderCell(row, "Equipments")}</td>
-              <td style={cellStyle}>{renderCell(row, "Description")}</td>
-              <td style={cellStyle}>{renderCell(row, "Action Planned")}</td>
-              <td style={cellStyle}>{renderCell(row, "Criticality")}</td>
-              <td style={cellStyle}>{renderCell(row, "Date Reported", "date")}</td>
-              <td style={cellStyle}>{renderCell(row, "Date Completed", "date")}</td>
-              <td style={cellStyle}>{renderCell(row, "Status (Vessel)")}</td>
+              <td style={cellStyle}>{renderCell(row, 'Vessel Name')}</td>
+              <td style={cellStyle}>{renderCell(row, 'Equipments')}</td>
+              <td style={cellStyle}>{renderCell(row, 'Description')}</td>
+              <td style={cellStyle}>{renderCell(row, 'Action Planned')}</td>
+              <td style={cellStyle}>{renderCell(row, 'Criticality')}</td>
+              <td style={cellStyle}>{renderCell(row, 'Date Reported', 'date')}</td>
+              <td style={cellStyle}>{renderCell(row, 'Date Completed', 'date')}</td>
+              <td style={cellStyle}>{renderCell(row, 'Status (Vessel)')}</td>
               <td style={cellStyle}>
                 {editingId === row.id ? (
                   <button onClick={handleSave} style={actionButtonStyle}>
@@ -128,7 +146,7 @@ const inputStyle = {
   backgroundColor: '#2a3f5f',
   color: '#f4f4f4',
   border: '1px solid #4a5f81',
-  borderRadius: '4px'
+  borderRadius: '4px',
 };
 
 const actionButtonStyle = {
