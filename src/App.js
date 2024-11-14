@@ -73,22 +73,23 @@ function App() {
   }, [user, fetchUserData]);
 
   const handleAddDefect = useCallback(() => {
-    setData((prevData) => {
-      const newDefect = {
-        id: `temp-${Date.now()}`,
-        SNo: prevData.length + 1,
-        vessel_id: '',
-        Equipments: '',
-        Description: '',
-        'Action Planned': '',
-        Criticality: '',
-        'Date Reported': '',
-        'Date Completed': '',
-        'Status (Vessel)': '',
-      };
-      return [...prevData, newDefect];
-    });
-  }, []);
+  const newDefect = {
+    id: `temp-${Date.now()}`,
+    SNo: data.length + 1,
+    vessel_id: '',
+    Equipments: '',
+    Description: '',
+    'Action Planned': '',
+    Criticality: '',
+    'Date Reported': '',
+    'Date Completed': '',
+    'Status (Vessel)': '',
+  };
+
+  setData((prevData) => [...prevData, newDefect]);
+  setEditingId(newDefect.id);  // Automatically set new entry to be editable
+  setEditedDefect(newDefect);  // Set new entry as edited defect
+}, [data]);
 
   const handleSaveDefect = useCallback(async (updatedDefect) => {
     try {
