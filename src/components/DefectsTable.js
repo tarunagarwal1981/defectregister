@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => {
-  const [editingId, setEditingId] = useState(null);
-  const [editedDefect, setEditedDefect] = useState(null);
+const DefectsTable = ({ 
+  data, 
+  onAddDefect, 
+  onSaveDefect, 
+  vessels, 
+  loading,
+  editingId,
+  editedDefect,
+  setEditingId,
+  setEditedDefect 
+}) => {
   const [vesselNames, setVesselNames] = useState({});
 
+  // Fetch vessel names for the assigned vessels
   useEffect(() => {
     const fetchVesselNames = async () => {
       try {
+        if (vessels.length === 0) return;
+        
         const { data: vesselData, error } = await supabase
           .from('vessels')
-          .select('vessel_id, vessel_name');
+          .select('vessel_id, vessel_name')
+          .in('vessel_id', vessels);
         
         if (error) throw error;
         
@@ -27,20 +39,17 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
     };
 
     fetchVesselNames();
-  }, []);
+  }, [vessels]);
 
-  useEffect(() => {
-    // When a new defect is added (it will have a temp id), set it to editing mode
-    const tempDefect = data.find(d => d.id?.startsWith('temp-'));
-    if (tempDefect) {
-      setEditingId(tempDefect.id);
-      setEditedDefect(tempDefect);
+  const handleChange = (field, value) => {
+    if (editedDefect) {
+      setEditedDefect({ ...editedDefect, [field]: value });
     }
-  }, [data]);
+  };
 
-  const handleEdit = (defect) => {
-    setEditingId(defect.id);
-    setEditedDefect({ ...defect });
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditedDefect(null);
   };
 
   const handleSave = async () => {
@@ -51,31 +60,9 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
     }
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditedDefect(null);
-  };
-
-  const handleChange = (field, value) => {
-    if (editedDefect) {
-      setEditedDefect({ ...editedDefect, [field]: value });
-    }
-  };
-
   return (
     <div className="table-wrapper">
-      <div className="header">
-        <h1>Defects Register</h1>
-        <div className="header-buttons">
-          <button 
-            onClick={onAddDefect}
-            className="add-button"
-            disabled={loading}
-          >
-            Add Defect
-          </button>
-        </div>
-      </div>
+      <h1 className="title">Defects Register</h1>
 
       <div className="table-container">
         <table>
@@ -103,16 +90,17 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       value={editedDefect?.vessel_id || ''}
                       onChange={(e) => handleChange('vessel_id', e.target.value)}
                       required
+                      className="form-input"
                     >
                       <option value="">Select Vessel</option>
-                      {vessels.map((vesselId) => (
-                        <option key={vesselId} value={vesselId}>
-                          {vesselNames[vesselId] || vesselId}
+                      {Object.entries(vesselNames).map(([id, name]) => (
+                        <option key={id} value={id}>
+                          {name}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    vesselNames[defect.vessel_id] || defect.vessel_id
+                    vesselNames[defect.vessel_id] || 'Loading...'
                   )}
                 </td>
                 <td>
@@ -122,6 +110,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       value={editedDefect?.Equipments || ''}
                       onChange={(e) => handleChange('Equipments', e.target.value)}
                       required
+                      className="form-input"
                       placeholder="Enter equipment"
                     />
                   ) : (
@@ -134,6 +123,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       value={editedDefect?.Description || ''}
                       onChange={(e) => handleChange('Description', e.target.value)}
                       required
+                      className="form-input"
                       placeholder="Enter description"
                     />
                   ) : (
@@ -146,6 +136,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       value={editedDefect?.['Action Planned'] || ''}
                       onChange={(e) => handleChange('Action Planned', e.target.value)}
                       required
+                      className="form-input"
                       placeholder="Enter planned action"
                     />
                   ) : (
@@ -158,6 +149,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       value={editedDefect?.Criticality || ''}
                       onChange={(e) => handleChange('Criticality', e.target.value)}
                       required
+                      className="form-input"
                     >
                       <option value="">Select Criticality</option>
                       <option value="High">High</option>
@@ -175,6 +167,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       value={editedDefect?.['Date Reported'] || ''}
                       onChange={(e) => handleChange('Date Reported', e.target.value)}
                       required
+                      className="form-input"
                     />
                   ) : (
                     defect['Date Reported']
@@ -186,6 +179,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       type="date"
                       value={editedDefect?.['Date Completed'] || ''}
                       onChange={(e) => handleChange('Date Completed', e.target.value)}
+                      className="form-input"
                     />
                   ) : (
                     defect['Date Completed']
@@ -197,6 +191,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       value={editedDefect?.['Status (Vessel)'] || ''}
                       onChange={(e) => handleChange('Status (Vessel)', e.target.value)}
                       required
+                      className="form-input"
                     >
                       <option value="">Select Status</option>
                       <option value="Open">Open</option>
@@ -218,7 +213,10 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => handleEdit(defect)} className="edit-button">
+                    <button onClick={() => {
+                      setEditingId(defect.id);
+                      setEditedDefect({ ...defect });
+                    }} className="edit-button">
                       Edit
                     </button>
                   )}
@@ -229,55 +227,32 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
         </table>
       </div>
 
+      <div className="footer">
+        <button 
+          onClick={onAddDefect}
+          className="add-button"
+          disabled={loading}
+        >
+          Add Defect
+        </button>
+      </div>
+
       <style jsx>{`
         .table-wrapper {
           padding: 20px;
-          max-width: 100%;
-          overflow-x: auto;
+          margin-top: 40px;
         }
 
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+        .title {
           margin-bottom: 20px;
-          padding: 0 20px;
-          position: sticky;
-          top: 0;
-          background: #132337;
-          z-index: 10;
-        }
-
-        .header-buttons {
-          display: flex;
-          gap: 10px;
-        }
-
-        .add-button {
-          background-color: #4CAF50;
-          color: white;
-          padding: 12px 24px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 16px;
-          font-weight: 500;
-          transition: all 0.2s;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .add-button:hover:not(:disabled) {
-          background-color: #45a049;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+          font-size: 24px;
         }
 
         .table-container {
           overflow-x: auto;
-          margin-top: 20px;
           background: rgba(255, 255, 255, 0.05);
           border-radius: 8px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          margin-bottom: 20px;
         }
 
         table {
@@ -287,7 +262,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
         }
 
         th, td {
-          padding: 15px;
+          padding: 12px;
           text-align: left;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -295,38 +270,52 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
         th {
           background-color: rgba(255, 255, 255, 0.1);
           font-weight: bold;
-          position: sticky;
-          top: 0;
-          z-index: 1;
         }
 
         tr.editing {
           background-color: rgba(255, 255, 255, 0.05);
         }
 
-        tr:hover:not(.editing) {
-          background-color: rgba(255, 255, 255, 0.03);
-        }
-
-        input, select, textarea {
+        .form-input {
           width: 100%;
           padding: 8px;
           border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 4px;
           background: rgba(255, 255, 255, 0.1);
           color: white;
-          font-size: 14px;
         }
 
-        textarea {
+        .form-input:focus {
+          outline: none;
+          border-color: #1a73e8;
+        }
+
+        textarea.form-input {
           min-height: 80px;
           resize: vertical;
         }
 
-        input:focus, select:focus, textarea:focus {
-          outline: none;
-          border-color: #1a73e8;
-          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        .footer {
+          display: flex;
+          justify-content: center;
+          margin-top: 20px;
+        }
+
+        .add-button {
+          padding: 12px 24px;
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .add-button:hover:not(:disabled) {
+          background-color: #45a049;
+          transform: translateY(-1px);
         }
 
         .action-buttons {
@@ -335,12 +324,11 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
         }
 
         .edit-button, .save-button, .cancel-button {
-          padding: 8px 16px;
+          padding: 6px 12px;
           border: none;
           border-radius: 4px;
           cursor: pointer;
           font-size: 14px;
-          font-weight: 500;
           transition: all 0.2s;
         }
 
@@ -359,25 +347,18 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
           color: white;
         }
 
-        button:hover:not(:disabled) {
-          opacity: 0.9;
-          transform: translateY(-1px);
-        }
-
         button:disabled {
           opacity: 0.7;
           cursor: not-allowed;
         }
 
         @media (max-width: 768px) {
-          .header {
-            flex-direction: column;
-            gap: 10px;
-            align-items: flex-start;
+          .table-wrapper {
+            padding: 10px;
           }
           
-          .add-button {
-            width: 100%;
+          .form-input {
+            font-size: 14px;
           }
         }
       `}</style>
