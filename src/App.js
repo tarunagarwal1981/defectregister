@@ -38,11 +38,16 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]); // Only use `user?.id` as a dependency
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
       fetchUserData();
+    } else {
+      // Clear data when user logs out
+      setData([]);
+      setAssignedVessels([]);
+      setError(null);
     }
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -55,62 +60,60 @@ function App() {
   }, [user, fetchUserData]);
 
   const handleAddDefect = useCallback(() => {
-    const newDefect = {
-      id: `temp-${Date.now()}`,
-      SNo: data.length + 1,
-      vessel_id: '',
-      Equipments: '',
-      Description: '',
-      'Action Planned': '',
-      Criticality: '',
-      'Date Reported': '',
-      'Date Completed': '',
-      'Status (Vessel)': '',
-    };
-    setData((prevData) => [...prevData, newDefect]);
-  }, []); // Removed `data.length` from dependencies
+    setData((prevData) => {
+      const newDefect = {
+        id: `temp-${Date.now()}`,
+        SNo: prevData.length + 1,
+        vessel_id: '',
+        Equipments: '',
+        Description: '',
+        'Action Planned': '',
+        Criticality: '',
+        'Date Reported': '',
+        'Date Completed': '',
+        'Status (Vessel)': '',
+      };
+      return [...prevData, newDefect];
+    });
+  }, []); // No dependencies needed as we use the function form of setState
 
   const handleSaveDefect = useCallback(async (updatedDefect) => {
     try {
       setError(null);
       const isNewDefect = updatedDefect.id?.startsWith('temp-');
+      const defectData = {
+        vessel_id: updatedDefect.vessel_id,
+        Equipments: updatedDefect.Equipments,
+        Description: updatedDefect.Description,
+        'Action Planned': updatedDefect['Action Planned'],
+        Criticality: updatedDefect.Criticality,
+        'Date Reported': updatedDefect['Date Reported'],
+        'Date Completed': updatedDefect['Date Completed'],
+        'Status (Vessel)': updatedDefect['Status (Vessel)'],
+      };
 
       if (!isNewDefect) {
         const { error } = await supabase
           .from('defects register')
-          .update({
-            vessel_id: updatedDefect.vessel_id,
-            Equipments: updatedDefect.Equipments,
-            Description: updatedDefect.Description,
-            'Action Planned': updatedDefect['Action Planned'],
-            Criticality: updatedDefect.Criticality,
-            'Date Reported': updatedDefect['Date Reported'],
-            'Date Completed': updatedDefect['Date Completed'],
-            'Status (Vessel)': updatedDefect['Status (Vessel)'],
-          })
+          .update(defectData)
           .eq('id', updatedDefect.id);
 
         if (error) throw error;
+
+        setData(prevData =>
+          prevData.map(d => d.id === updatedDefect.id ? { ...d, ...defectData } : d)
+        );
       } else {
         const { data: newDefect, error } = await supabase
           .from('defects register')
-          .insert({
-            vessel_id: updatedDefect.vessel_id,
-            Equipments: updatedDefect.Equipments,
-            Description: updatedDefect.Description,
-            'Action Planned': updatedDefect['Action Planned'],
-            Criticality: updatedDefect.Criticality,
-            'Date Reported': updatedDefect['Date Reported'],
-            'Date Completed': updatedDefect['Date Completed'],
-            'Status (Vessel)': updatedDefect['Status (Vessel)'],
-          })
+          .insert(defectData)
           .select()
           .single();
 
         if (error) throw error;
 
-        setData((prevData) =>
-          prevData.map((d) => (d.id === updatedDefect.id ? { ...newDefect, SNo: d.SNo } : d))
+        setData(prevData =>
+          prevData.map(d => d.id === updatedDefect.id ? { ...newDefect, SNo: d.SNo } : d)
         );
       }
     } catch (error) {
@@ -119,21 +122,25 @@ function App() {
     }
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
-      setData([]);
-      setAssignedVessels([]);
     } catch (error) {
       console.error("Error logging out:", error);
       setError(error.message);
     }
-  };
+  }, []);
 
   return (
-    <div style={{ backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4', fontFamily: 'Nunito, sans-serif' }}>
+    <div style={{
+      backgroundColor: '#132337',
+      minHeight: '100vh',
+      color: '#f4f4f4',
+      fontFamily: 'Nunito, sans-serif',
+      position: 'relative'
+    }}>
       {error && (
         <div style={{
           position: 'fixed',
@@ -143,7 +150,8 @@ function App() {
           backgroundColor: '#FF4D4D',
           padding: '10px 20px',
           borderRadius: '4px',
-          zIndex: 1000
+          zIndex: 1000,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
         }}>
           {error}
         </div>
@@ -162,7 +170,10 @@ function App() {
               color: '#fff',
               border: 'none',
               cursor: 'pointer',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              transition: 'background-color 0.2s',
+              fontSize: '14px',
+              fontWeight: '500'
             }}
           >
             Logout
