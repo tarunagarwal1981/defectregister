@@ -3,50 +3,55 @@ import Auth from './components/Auth';
 import DataTable from './components/DefectsTable';
 import { supabase } from './supabaseClient';
 
-// In the fetchUserData function, update the vessels query:
+function App() {
+  const [user, setUser] = useState(null);
+  const [data, setData] = useState([]);
+  const [assignedVessels, setAssignedVessels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const fetchUserData = useCallback(async () => {
-  if (!user?.id) return;
+  const fetchUserData = useCallback(async () => {
+    if (!user?.id) return;
 
-  try {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-    // First get the user's assigned vessels
-    const { data: userVessels, error: vesselsError } = await supabase
-      .from('user_vessels')
-      .select('vessel_id')
-      .eq('user_id', user.id);
+      // First get the user's assigned vessels
+      const { data: userVessels, error: vesselsError } = await supabase
+        .from('user_vessels')
+        .select('vessel_id')
+        .eq('user_id', user.id);
 
-    if (vesselsError) throw vesselsError;
+      if (vesselsError) throw vesselsError;
 
-    // Get vessel names for the assigned vessels
-    const vesselIds = userVessels.map(v => v.vessel_id);
-    
-    const [defectsResponse, vesselsResponse] = await Promise.all([
-      supabase
-        .from('defects register')
-        .select('*')
-        .in('vessel_id', vesselIds),
-      supabase
-        .from('vessels')
-        .select('vessel_id, vessel_name')
-        .in('vessel_id', vesselIds)
-    ]);
+      // Get vessel names for the assigned vessels
+      const vesselIds = userVessels.map(v => v.vessel_id);
+      
+      const [defectsResponse, vesselsResponse] = await Promise.all([
+        supabase
+          .from('defects register')
+          .select('*')
+          .in('vessel_id', vesselIds),
+        supabase
+          .from('vessels')
+          .select('vessel_id, vessel_name')
+          .in('vessel_id', vesselIds)
+      ]);
 
-    if (defectsResponse.error) throw defectsResponse.error;
-    if (vesselsResponse.error) throw vesselsResponse.error;
+      if (defectsResponse.error) throw defectsResponse.error;
+      if (vesselsResponse.error) throw vesselsResponse.error;
 
-    setAssignedVessels(vesselIds);
-    setData(defectsResponse.data);
-    
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    setError(error.message);
-  } finally {
-    setLoading(false);
-  }
-}, [user?.id]);
+      setAssignedVessels(vesselIds);
+      setData(defectsResponse.data);
+      
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -83,7 +88,7 @@ const fetchUserData = useCallback(async () => {
       };
       return [...prevData, newDefect];
     });
-  }, []); // No dependencies needed as we use the function form of setState
+  }, []);
 
   const handleSaveDefect = useCallback(async (updatedDefect) => {
     try {
