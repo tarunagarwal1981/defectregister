@@ -219,6 +219,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
+          position: relative;
         }
 
         .add-button {
