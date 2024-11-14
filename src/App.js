@@ -9,6 +9,9 @@ function App() {
   const [assignedVessels, setAssignedVessels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editedDefect, setEditedDefect] = useState(null);
+
 
   const fetchUserData = useCallback(async () => {
     if (!user?.id) return;
