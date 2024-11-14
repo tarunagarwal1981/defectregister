@@ -7,6 +7,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [data, setData] = useState([]);
   const [assignedVessels, setAssignedVessels] = useState([]);
+  const [vesselNames, setVesselNames] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -19,33 +20,40 @@ function App() {
       setLoading(true);
       setError(null);
 
-      // First get the user's assigned vessels
+      // First get user's assigned vessels
       const { data: userVessels, error: vesselsError } = await supabase
         .from('user_vessels')
-        .select('vessel_id')
+        .select(`
+          vessel_id,
+          vessels:vessel_id (
+            vessel_id,
+            vessel_name
+          )
+        `)
         .eq('user_id', user.id);
 
       if (vesselsError) throw vesselsError;
 
-      // Get vessel names for the assigned vessels
+      // Extract vessel IDs and create vessel names mapping
       const vesselIds = userVessels.map(v => v.vessel_id);
-      
-      const [defectsResponse, vesselsResponse] = await Promise.all([
-        supabase
-          .from('defects register')
-          .select('*')
-          .in('vessel_id', vesselIds),
-        supabase
-          .from('vessels')
-          .select('vessel_id, vessel_name')
-          .in('vessel_id', vesselIds)
-      ]);
+      const vesselsMap = userVessels.reduce((acc, v) => {
+        if (v.vessels) {
+          acc[v.vessels.vessel_id] = v.vessels.vessel_name;
+        }
+        return acc;
+      }, {});
 
-      if (defectsResponse.error) throw defectsResponse.error;
-      if (vesselsResponse.error) throw vesselsResponse.error;
+      // Fetch defects for assigned vessels
+      const { data: defects, error: defectsError } = await supabase
+        .from('defects register')
+        .select('*')
+        .in('vessel_id', vesselIds);
+
+      if (defectsError) throw defectsError;
 
       setAssignedVessels(vesselIds);
-      setData(defectsResponse.data);
+      setVesselNames(vesselsMap);
+      setData(defects || []);
       
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -62,6 +70,7 @@ function App() {
       // Clear data when user logs out
       setData([]);
       setAssignedVessels([]);
+      setVesselNames({});
       setError(null);
     }
 
@@ -75,6 +84,11 @@ function App() {
   }, [user, fetchUserData]);
 
   const handleAddDefect = useCallback(() => {
+    if (assignedVessels.length === 0) {
+      setError("You don't have any vessels assigned to you. Please contact your administrator.");
+      return;
+    }
+
     const newDefect = {
       id: `temp-${Date.now()}`,
       SNo: data.length + 1,
@@ -91,11 +105,17 @@ function App() {
     setData(prevData => [...prevData, newDefect]);
     setEditingId(newDefect.id);
     setEditedDefect(newDefect);
-  }, [data.length]);
+  }, [data.length, assignedVessels.length]);
 
   const handleSaveDefect = useCallback(async (updatedDefect) => {
     try {
       setError(null);
+
+      // Validate vessel assignment
+      if (!assignedVessels.includes(updatedDefect.vessel_id)) {
+        throw new Error("You don't have permission to add/edit defects for this vessel.");
+      }
+
       const isNewDefect = updatedDefect.id?.startsWith('temp-');
       const defectData = {
         vessel_id: updatedDefect.vessel_id,
@@ -109,10 +129,17 @@ function App() {
       };
 
       if (!isNewDefect) {
+        // Verify user has permission to edit this defect
+        const existingDefect = data.find(d => d.id === updatedDefect.id);
+        if (!existingDefect || !assignedVessels.includes(existingDefect.vessel_id)) {
+          throw new Error("You don't have permission to edit this defect.");
+        }
+
         const { error } = await supabase
           .from('defects register')
           .update(defectData)
-          .eq('id', updatedDefect.id);
+          .eq('id', updatedDefect.id)
+          .single();
 
         if (error) throw error;
 
@@ -139,7 +166,7 @@ function App() {
       console.error("Error saving defect:", error);
       setError(error.message);
     }
-  }, []);
+  }, [assignedVessels, data]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -148,6 +175,7 @@ function App() {
       setUser(null);
       setData([]);
       setAssignedVessels([]);
+      setVesselNames({});
       setEditingId(null);
       setEditedDefect(null);
     } catch (error) {
@@ -174,6 +202,7 @@ function App() {
             onAddDefect={handleAddDefect}
             onSaveDefect={handleSaveDefect}
             vessels={assignedVessels}
+            vesselNames={vesselNames}
             loading={loading}
             editingId={editingId}
             editedDefect={editedDefect}
@@ -192,6 +221,7 @@ function App() {
           color: #f4f4f4;
           font-family: 'Nunito', sans-serif;
           position: relative;
+          padding-top: 60px;
         }
 
         .error-message {
@@ -208,7 +238,7 @@ function App() {
         }
 
         .logout-button {
-          position: absolute;
+          position: fixed;
           top: 10px;
           right: 10px;
           padding: 10px 20px;
@@ -220,6 +250,7 @@ function App() {
           transition: all 0.2s;
           font-size: 14px;
           font-weight: 500;
+          z-index: 1000;
         }
 
         .logout-button:hover {
