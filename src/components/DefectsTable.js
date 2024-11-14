@@ -6,7 +6,6 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
   const [editedDefect, setEditedDefect] = useState(null);
   const [vesselNames, setVesselNames] = useState({});
 
-  // Fetch vessel names when component mounts
   useEffect(() => {
     const fetchVesselNames = async () => {
       try {
@@ -29,6 +28,15 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
 
     fetchVesselNames();
   }, []);
+
+  useEffect(() => {
+    // When a new defect is added (it will have a temp id), set it to editing mode
+    const tempDefect = data.find(d => d.id?.startsWith('temp-'));
+    if (tempDefect) {
+      setEditingId(tempDefect.id);
+      setEditedDefect(tempDefect);
+    }
+  }, [data]);
 
   const handleEdit = (defect) => {
     setEditingId(defect.id);
@@ -55,16 +63,18 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
   };
 
   return (
-    <div className="container">
+    <div className="table-wrapper">
       <div className="header">
-        <h1>Defects Table</h1>
-        <button 
-          onClick={onAddDefect}
-          className="add-button"
-          disabled={loading}
-        >
-          Add Defect
-        </button>
+        <h1>Defects Register</h1>
+        <div className="header-buttons">
+          <button 
+            onClick={onAddDefect}
+            className="add-button"
+            disabled={loading}
+          >
+            Add Defect
+          </button>
+        </div>
       </div>
 
       <div className="table-container">
@@ -85,13 +95,14 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
           </thead>
           <tbody>
             {data.map((defect) => (
-              <tr key={defect.id}>
+              <tr key={defect.id} className={editingId === defect.id ? 'editing' : ''}>
                 <td>{defect.SNo}</td>
                 <td>
                   {editingId === defect.id ? (
                     <select
                       value={editedDefect?.vessel_id || ''}
                       onChange={(e) => handleChange('vessel_id', e.target.value)}
+                      required
                     >
                       <option value="">Select Vessel</option>
                       {vessels.map((vesselId) => (
@@ -110,6 +121,8 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       type="text"
                       value={editedDefect?.Equipments || ''}
                       onChange={(e) => handleChange('Equipments', e.target.value)}
+                      required
+                      placeholder="Enter equipment"
                     />
                   ) : (
                     defect.Equipments
@@ -120,6 +133,8 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                     <textarea
                       value={editedDefect?.Description || ''}
                       onChange={(e) => handleChange('Description', e.target.value)}
+                      required
+                      placeholder="Enter description"
                     />
                   ) : (
                     defect.Description
@@ -130,6 +145,8 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                     <textarea
                       value={editedDefect?.['Action Planned'] || ''}
                       onChange={(e) => handleChange('Action Planned', e.target.value)}
+                      required
+                      placeholder="Enter planned action"
                     />
                   ) : (
                     defect['Action Planned']
@@ -140,6 +157,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                     <select
                       value={editedDefect?.Criticality || ''}
                       onChange={(e) => handleChange('Criticality', e.target.value)}
+                      required
                     >
                       <option value="">Select Criticality</option>
                       <option value="High">High</option>
@@ -156,6 +174,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                       type="date"
                       value={editedDefect?.['Date Reported'] || ''}
                       onChange={(e) => handleChange('Date Reported', e.target.value)}
+                      required
                     />
                   ) : (
                     defect['Date Reported']
@@ -177,6 +196,7 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
                     <select
                       value={editedDefect?.['Status (Vessel)'] || ''}
                       onChange={(e) => handleChange('Status (Vessel)', e.target.value)}
+                      required
                     >
                       <option value="">Select Status</option>
                       <option value="Open">Open</option>
@@ -210,8 +230,10 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
       </div>
 
       <style jsx>{`
-        .container {
+        .table-wrapper {
           padding: 20px;
+          max-width: 100%;
+          overflow-x: auto;
         }
 
         .header {
@@ -219,40 +241,53 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
-          position: relative;
+          padding: 0 20px;
+          position: sticky;
+          top: 0;
+          background: #132337;
+          z-index: 10;
+        }
+
+        .header-buttons {
+          display: flex;
+          gap: 10px;
         }
 
         .add-button {
           background-color: #4CAF50;
           color: white;
-          padding: 10px 20px;
+          padding: 12px 24px;
           border: none;
           border-radius: 4px;
           cursor: pointer;
-          transition: background-color 0.2s;
+          font-size: 16px;
+          font-weight: 500;
+          transition: all 0.2s;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .add-button:hover:not(:disabled) {
           background-color: #45a049;
-        }
-
-        .add-button:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
         .table-container {
           overflow-x: auto;
+          margin-top: 20px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         table {
           width: 100%;
           border-collapse: collapse;
-          background: rgba(255, 255, 255, 0.05);
+          min-width: 1200px;
         }
 
         th, td {
-          padding: 12px;
+          padding: 15px;
           text-align: left;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -260,10 +295,17 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
         th {
           background-color: rgba(255, 255, 255, 0.1);
           font-weight: bold;
+          position: sticky;
+          top: 0;
+          z-index: 1;
         }
 
-        tr:hover {
+        tr.editing {
           background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover:not(.editing) {
+          background-color: rgba(255, 255, 255, 0.03);
         }
 
         input, select, textarea {
@@ -273,6 +315,18 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
           border-radius: 4px;
           background: rgba(255, 255, 255, 0.1);
           color: white;
+          font-size: 14px;
+        }
+
+        textarea {
+          min-height: 80px;
+          resize: vertical;
+        }
+
+        input:focus, select:focus, textarea:focus {
+          outline: none;
+          border-color: #1a73e8;
+          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
         }
 
         .action-buttons {
@@ -281,12 +335,13 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
         }
 
         .edit-button, .save-button, .cancel-button {
-          padding: 5px 10px;
+          padding: 8px 16px;
           border: none;
           border-radius: 4px;
           cursor: pointer;
           font-size: 14px;
-          transition: background-color 0.2s;
+          font-weight: 500;
+          transition: all 0.2s;
         }
 
         .edit-button {
@@ -294,17 +349,9 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
           color: white;
         }
 
-        .edit-button:hover {
-          background-color: #45a049;
-        }
-
         .save-button {
           background-color: #2196F3;
           color: white;
-        }
-
-        .save-button:hover {
-          background-color: #1976D2;
         }
 
         .cancel-button {
@@ -312,13 +359,26 @@ const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => 
           color: white;
         }
 
-        .cancel-button:hover {
-          background-color: #d32f2f;
+        button:hover:not(:disabled) {
+          opacity: 0.9;
+          transform: translateY(-1px);
         }
 
         button:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+          .header {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+          }
+          
+          .add-button {
+            width: 100%;
+          }
         }
       `}</style>
     </div>
