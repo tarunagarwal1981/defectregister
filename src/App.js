@@ -1,4 +1,4 @@
-FhandleAddimport React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Auth from './components/Auth';
 import DataTable from './components/DefectsTable';
 import { supabase } from './supabaseClient';
@@ -11,7 +11,6 @@ function App() {
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editedDefect, setEditedDefect] = useState(null);
-
 
   const fetchUserData = useCallback(async () => {
     if (!user?.id) return;
@@ -84,12 +83,14 @@ function App() {
       Description: '',
       'Action Planned': '',
       Criticality: '',
-      'Date Reported': new Date().toISOString().split('T')[0], // Set current date as default
+      'Date Reported': new Date().toISOString().split('T')[0],
       'Date Completed': '',
-      'Status (Vessel)': 'Open', // Set default status
+      'Status (Vessel)': 'Open',
     };
-  
-    setData((prevData) => [...prevData, newDefect]);
+
+    setData(prevData => [...prevData, newDefect]);
+    setEditingId(newDefect.id);
+    setEditedDefect(newDefect);
   }, [data.length]);
 
   const handleSaveDefect = useCallback(async (updatedDefect) => {
@@ -131,6 +132,9 @@ function App() {
           prevData.map(d => d.id === updatedDefect.id ? { ...newDefect, SNo: d.SNo } : d)
         );
       }
+
+      setEditingId(null);
+      setEditedDefect(null);
     } catch (error) {
       console.error("Error saving defect:", error);
       setError(error.message);
@@ -142,6 +146,10 @@ function App() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
+      setData([]);
+      setAssignedVessels([]);
+      setEditingId(null);
+      setEditedDefect(null);
     } catch (error) {
       console.error("Error logging out:", error);
       setError(error.message);
@@ -149,48 +157,16 @@ function App() {
   }, []);
 
   return (
-    <div style={{
-      backgroundColor: '#132337',
-      minHeight: '100vh',
-      color: '#f4f4f4',
-      fontFamily: 'Nunito, sans-serif',
-      position: 'relative'
-    }}>
+    <div className="app-container">
       {error && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#FF4D4D',
-          padding: '10px 20px',
-          borderRadius: '4px',
-          zIndex: 1000,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-        }}>
+        <div className="error-message">
           {error}
         </div>
       )}
 
       {user ? (
         <>
-          <button
-            onClick={handleLogout}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              padding: '10px 20px',
-              backgroundColor: '#FF4D4D',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-              borderRadius: '4px',
-              transition: 'background-color 0.2s',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-          >
+          <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
           <DataTable
@@ -199,11 +175,69 @@ function App() {
             onSaveDefect={handleSaveDefect}
             vessels={assignedVessels}
             loading={loading}
+            editingId={editingId}
+            editedDefect={editedDefect}
+            setEditingId={setEditingId}
+            setEditedDefect={setEditedDefect}
           />
         </>
       ) : (
         <Auth onLogin={setUser} />
       )}
+
+      <style jsx>{`
+        .app-container {
+          background-color: #132337;
+          min-height: 100vh;
+          color: #f4f4f4;
+          font-family: 'Nunito', sans-serif;
+          position: relative;
+        }
+
+        .error-message {
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #FF4D4D;
+          padding: 10px 20px;
+          border-radius: 4px;
+          z-index: 1000;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          animation: slideIn 0.3s ease-out;
+        }
+
+        .logout-button {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          padding: 10px 20px;
+          background-color: #FF4D4D;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: all 0.2s;
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        .logout-button:hover {
+          background-color: #ff3333;
+          transform: translateY(-1px);
+        }
+
+        @keyframes slideIn {
+          from {
+            transform: translate(-50%, -100%);
+            opacity: 0;
+          }
+          to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
