@@ -10,29 +10,33 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Memoize fetchUserData to prevent unnecessary recreations
   const fetchUserData = useCallback(async () => {
     if (!user?.id) return;
-    
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch assigned vessels and defects in parallel
       const [vesselsResponse, defectsResponse] = await Promise.all([
         supabase
           .from('user_vessels')
-          .select('vessel_name')
+          .select('vessel_id, vessel_names(vessel_name)')
           .eq('user_id', user.id),
         supabase
-          .from('defects register')
+          .from('defects_register')
           .select('*')
+          .in('vessel_id', assignedVessels.map((v) => v.vessel_id))
       ]);
 
       if (vesselsResponse.error) throw vesselsResponse.error;
       if (defectsResponse.error) throw defectsResponse.error;
 
-      setAssignedVessels(vesselsResponse.data.map(v => v.vessel_name));
+      setAssignedVessels(
+        vesselsResponse.data.map((v) => ({
+          vessel_id: v.vessel_id,
+          vessel_name: v.vessel_names.vessel_name,
+        }))
+      );
+
       setData(defectsResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -58,64 +62,42 @@ function App() {
 
   const handleAddDefect = useCallback(() => {
     const newDefect = {
-      id: `temp-${Date.now()}`, // Temporary unique ID
-      SNo: data.length + 1,
-      'Vessel Name': '',
+      id: `temp-${Date.now()}`,
+      vessel_id: '',
       Equipments: '',
       Description: '',
-      'Action Planned': '',
+      Action_Planned: '',
       Criticality: '',
-      'Date Reported': '',
-      'Date Completed': '',
-      'Status (Vessel)': '',
+      Date_Reported: '',
+      Date_Completed: '',
+      Status_Vessel: '',
     };
-    setData(prevData => [...prevData, newDefect]);
+    setData((prevData) => [...prevData, newDefect]);
   }, [data.length]);
 
   const handleSaveDefect = useCallback(async (updatedDefect) => {
     try {
       setError(null);
       const isNewDefect = updatedDefect.id?.startsWith('temp-');
-      
+
       if (!isNewDefect) {
         const { error } = await supabase
-          .from('defects register')
-          .update({
-            'Vessel Name': updatedDefect['Vessel Name'],
-            Equipments: updatedDefect.Equipments,
-            Description: updatedDefect.Description,
-            'Action Planned': updatedDefect['Action Planned'],
-            Criticality: updatedDefect.Criticality,
-            'Date Reported': updatedDefect['Date Reported'],
-            'Date Completed': updatedDefect['Date Completed'],
-            'Status (Vessel)': updatedDefect['Status (Vessel)'],
-          })
+          .from('defects_register')
+          .update(updatedDefect)
           .eq('id', updatedDefect.id);
-        
+
         if (error) throw error;
       } else {
         const { data: newDefect, error } = await supabase
-          .from('defects register')
-          .insert({
-            'Vessel Name': updatedDefect['Vessel Name'],
-            Equipments: updatedDefect.Equipments,
-            Description: updatedDefect.Description,
-            'Action Planned': updatedDefect['Action Planned'],
-            Criticality: updatedDefect.Criticality,
-            'Date Reported': updatedDefect['Date Reported'],
-            'Date Completed': updatedDefect['Date Completed'],
-            'Status (Vessel)': updatedDefect['Status (Vessel)'],
-          })
+          .from('defects_register')
+          .insert(updatedDefect)
           .select()
           .single();
-        
+
         if (error) throw error;
         
-        // Update the temporary ID with the real one
-        setData(prevData => 
-          prevData.map(d => 
-            d.id === updatedDefect.id ? { ...newDefect, SNo: d.SNo } : d
-          )
+        setData((prevData) => 
+          prevData.map((d) => (d.id === updatedDefect.id ? { ...newDefect } : d))
         );
       }
     } catch (error) {
@@ -139,44 +121,16 @@ function App() {
 
   return (
     <div style={{ backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4', fontFamily: 'Nunito, sans-serif' }}>
-      {error && (
-        <div style={{ 
-          position: 'fixed', 
-          top: '20px', 
-          left: '50%', 
-          transform: 'translateX(-50%)',
-          backgroundColor: '#FF4D4D',
-          padding: '10px 20px',
-          borderRadius: '4px',
-          zIndex: 1000
-        }}>
-          {error}
-        </div>
-      )}
+      {error && <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#FF4D4D', padding: '10px 20px', borderRadius: '4px', zIndex: 1000 }}>{error}</div>}
       
       {user ? (
         <>
-          <button 
-            onClick={handleLogout} 
-            style={{ 
-              position: 'absolute', 
-              top: '10px', 
-              right: '10px', 
-              padding: '10px 20px', 
-              backgroundColor: '#FF4D4D', 
-              color: '#fff', 
-              border: 'none', 
-              cursor: 'pointer', 
-              borderRadius: '4px' 
-            }}
-          >
-            Logout
-          </button>
+          <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', right: '10px', padding: '10px 20px', backgroundColor: '#FF4D4D', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>Logout</button>
           <DataTable
             data={data}
             onAddDefect={handleAddDefect}
             onSaveDefect={handleSaveDefect}
-            assignedVessels={assignedVessels}
+            vessels={assignedVessels}
             loading={loading}
           />
         </>
