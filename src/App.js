@@ -8,20 +8,21 @@ function App() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data: defects, error } = await supabase.from('defects register').select('*');
-        if (error) throw error;
-        console.log("Data fetched:", defects);
-        setData(defects);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch data function
+  const fetchData = async () => {
+    try {
+      const { data: defects, error } = await supabase.from('defects register').select('*');
+      if (error) throw error;
+      console.log("Data fetched:", defects);
+      setData(defects);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -33,9 +34,10 @@ function App() {
     };
   }, []);
 
+  // Handle adding a new defect
   const handleAddDefect = () => {
     const newDefect = {
-      id: null, // Temporary ID for a new defect
+      id: null, // Placeholder ID for new defect
       SNo: data.length + 1,
       'Vessel Name': '',
       Equipments: '',
@@ -49,10 +51,11 @@ function App() {
     setData([...data, newDefect]);
   };
 
+  // Save defect to the database
   const handleSaveDefect = async (updatedDefect) => {
     try {
       if (updatedDefect.id) {
-        // Update existing defect in the database
+        // Update an existing defect
         const { error } = await supabase
           .from('defects register')
           .update({
@@ -68,7 +71,7 @@ function App() {
           .eq('id', updatedDefect.id);
         if (error) throw error;
       } else {
-        // Insert a new defect into the database
+        // Insert a new defect
         const { data: newDefect, error } = await supabase
           .from('defects register')
           .insert({
@@ -83,15 +86,18 @@ function App() {
           })
           .single();
         if (error) throw error;
-        // Update the row with the real ID from the database
+
+        // Update the new defect ID and refresh data
         updatedDefect.id = newDefect.id;
       }
-      setData(data.map(d => (d.id === updatedDefect.id ? updatedDefect : d)));
+      // Re-fetch data after saving a new or edited defect to update the table
+      fetchData();
     } catch (error) {
       console.error("Error saving defect:", error);
     }
   };
 
+  // Logout functionality
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Error logging out:", error);
