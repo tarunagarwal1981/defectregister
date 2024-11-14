@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Auth from './components/Auth';
 import DataTable from './components/DefectsTable';
 import { supabase } from './supabaseClient';
@@ -8,52 +8,57 @@ function App() {
   const [data, setData] = useState([]);
   const [assignedVessels, setAssignedVessels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Fetch assigned vessels for the logged-in user
-        const { data: vessels, error: vesselsError } = await supabase
+  // Memoize fetchUserData to prevent unnecessary recreations
+  const fetchUserData = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch assigned vessels and defects in parallel
+      const [vesselsResponse, defectsResponse] = await Promise.all([
+        supabase
           .from('user_vessels')
           .select('vessel_name')
-          .eq('user_id', user?.id);
-
-        if (vesselsError) throw vesselsError;
-        setAssignedVessels(vessels.map(v => v.vessel_name));
-
-        // Fetch defect data based on assigned vessels
-        const { data: defects, error: defectsError } = await supabase
+          .eq('user_id', user.id),
+        supabase
           .from('defects register')
-          .select('*');
+          .select('*')
+      ]);
 
-        if (defectsError) throw defectsError;
-        setData(defects);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      if (vesselsResponse.error) throw vesselsResponse.error;
+      if (defectsResponse.error) throw defectsResponse.error;
 
+      setAssignedVessels(vesselsResponse.data.map(v => v.vessel_name));
+      setData(defectsResponse.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
     if (user) {
-      setLoading(true);
       fetchUserData();
     }
 
-    // Set up authentication state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
     return () => {
-      if (authListener) authListener.unsubscribe();
+      authListener?.unsubscribe();
     };
-  }, [user]);
+  }, [user, fetchUserData]);
 
-  // Handle adding a new defect entry
-  const handleAddDefect = () => {
+  const handleAddDefect = useCallback(() => {
     const newDefect = {
-      id: null, // Temporary ID for new defect
+      id: `temp-${Date.now()}`, // Temporary unique ID
       SNo: data.length + 1,
       'Vessel Name': '',
       Equipments: '',
@@ -64,14 +69,15 @@ function App() {
       'Date Completed': '',
       'Status (Vessel)': '',
     };
-    setData([...data, newDefect]);
-  };
+    setData(prevData => [...prevData, newDefect]);
+  }, [data.length]);
 
-  // Save defect entry to the database
-  const handleSaveDefect = async (updatedDefect) => {
+  const handleSaveDefect = useCallback(async (updatedDefect) => {
     try {
-      if (updatedDefect.id) {
-        // Update an existing defect
+      setError(null);
+      const isNewDefect = updatedDefect.id?.startsWith('temp-');
+      
+      if (!isNewDefect) {
         const { error } = await supabase
           .from('defects register')
           .update({
@@ -85,9 +91,9 @@ function App() {
             'Status (Vessel)': updatedDefect['Status (Vessel)'],
           })
           .eq('id', updatedDefect.id);
+        
         if (error) throw error;
       } else {
-        // Insert a new defect
         const { data: newDefect, error } = await supabase
           .from('defects register')
           .insert({
@@ -100,37 +106,70 @@ function App() {
             'Date Completed': updatedDefect['Date Completed'],
             'Status (Vessel)': updatedDefect['Status (Vessel)'],
           })
+          .select()
           .single();
+        
         if (error) throw error;
-        updatedDefect.id = newDefect.id;
+        
+        // Update the temporary ID with the real one
+        setData(prevData => 
+          prevData.map(d => 
+            d.id === updatedDefect.id ? { ...newDefect, SNo: d.SNo } : d
+          )
+        );
       }
-      // Refresh data to reflect saved changes
-      setData((prevData) => prevData.map(d => (d.id === updatedDefect.id ? updatedDefect : d)));
     } catch (error) {
       console.error("Error saving defect:", error);
+      setError(error.message);
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setData([]);
+      setAssignedVessels([]);
+    } catch (error) {
+      console.error("Error logging out:", error);
+      setError(error.message);
     }
   };
 
-  // Logout function
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error("Error logging out:", error);
-    setUser(null);
-  };
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#132337', color: '#f4f4f4' }}>
-        Loading...
-      </div>
-    );
-  }
-
   return (
     <div style={{ backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4', fontFamily: 'Nunito, sans-serif' }}>
+      {error && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '20px', 
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          backgroundColor: '#FF4D4D',
+          padding: '10px 20px',
+          borderRadius: '4px',
+          zIndex: 1000
+        }}>
+          {error}
+        </div>
+      )}
+      
       {user ? (
         <>
-          <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', right: '10px', padding: '10px 20px', backgroundColor: '#FF4D4D', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
+          <button 
+            onClick={handleLogout} 
+            style={{ 
+              position: 'absolute', 
+              top: '10px', 
+              right: '10px', 
+              padding: '10px 20px', 
+              backgroundColor: '#FF4D4D', 
+              color: '#fff', 
+              border: 'none', 
+              cursor: 'pointer', 
+              borderRadius: '4px' 
+            }}
+          >
             Logout
           </button>
           <DataTable
@@ -138,6 +177,7 @@ function App() {
             onAddDefect={handleAddDefect}
             onSaveDefect={handleSaveDefect}
             assignedVessels={assignedVessels}
+            loading={loading}
           />
         </>
       ) : (
