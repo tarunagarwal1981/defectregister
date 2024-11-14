@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+FhandleAddimport React, { useState, useEffect, useCallback } from 'react';
 import Auth from './components/Auth';
 import DataTable from './components/DefectsTable';
 import { supabase } from './supabaseClient';
@@ -76,23 +76,21 @@ function App() {
   }, [user, fetchUserData]);
 
   const handleAddDefect = useCallback(() => {
-  const newDefect = {
-    id: `temp-${Date.now()}`,
-    SNo: data.length + 1,
-    vessel_id: '',
-    Equipments: '',
-    Description: '',
-    'Action Planned': '',
-    Criticality: '',
-    'Date Reported': '',
-    'Date Completed': '',
-    'Status (Vessel)': '',
-  };
-
-  setData((prevData) => [...prevData, newDefect]);
-  setEditingId(newDefect.id);  // Automatically set new entry to be editable
-  setEditedDefect(newDefect);  // Set new entry as edited defect
-}, [data]);
+    const newDefect = {
+      id: `temp-${Date.now()}`,
+      SNo: data.length + 1,
+      vessel_id: '',
+      Equipments: '',
+      Description: '',
+      'Action Planned': '',
+      Criticality: '',
+      'Date Reported': new Date().toISOString().split('T')[0], // Set current date as default
+      'Date Completed': '',
+      'Status (Vessel)': 'Open', // Set default status
+    };
+  
+    setData((prevData) => [...prevData, newDefect]);
+  }, [data.length]);
 
   const handleSaveDefect = useCallback(async (updatedDefect) => {
     try {
