@@ -6,33 +6,17 @@ import { supabase } from './supabaseClient';
 function App() {
   const [user, setUser] = useState(null);
   const [data, setData] = useState([]);
-  const [vessels, setVessels] = useState([]); // List of vessels assigned to the user
+  const [assignedVessels, setAssignedVessels] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch assigned vessels for the logged-in user
-  const fetchAssignedVessels = async () => {
-    try {
-      const { data: assignedVessels, error } = await supabase
-        .from('user_vessels')
-        .select('vessel_name')
-        .eq('user_id', user.id);
-      if (error) throw error;
-
-      setVessels(assignedVessels.map(v => v.vessel_name)); // Set vessel names for dropdown
-    } catch (error) {
-      console.error("Error fetching vessels:", error);
-    }
-  };
-
-  // Fetch defect data for assigned vessels only
+  // Fetch defects data for assigned vessels
   const fetchData = async () => {
     try {
       const { data: defects, error } = await supabase
         .from('defects register')
         .select('*');
       if (error) throw error;
-
-      setData(defects); // Supabase policies will filter data based on assigned vessels
+      setData(defects);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -40,38 +24,46 @@ function App() {
     }
   };
 
-  // Combined fetch operations on login
-  // Ensure the correct syntax for your useEffect
-  useEffect(() => {
-    if (user) {
-      fetchAssignedVessels();
-      fetchData();
+  // Fetch vessels assigned to the logged-in user
+  const fetchAssignedVessels = async () => {
+    try {
+      const { data: vessels, error } = await supabase
+        .from('user_vessels')
+        .select('vessel_name')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setAssignedVessels(vessels.map(v => v.vessel_name));
+    } catch (error) {
+      console.error("Error fetching assigned vessels:", error);
     }
-  
-    // Clean up auth listener on component unmount
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-  
-    return () => {
-      if (authListener) authListener.unsubscribe();
+  };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        setLoading(true);
+        await fetchAssignedVessels();
+        await fetchData();
+        setLoading(false);
+      }
     };
-  }, [user]); // Add 'user' as a dependency
 
-
+    // Listen for authentication state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
+    fetchUserData();
+
     return () => {
-      if (authListener) authListener.unsubscribe();
+      authListener?.unsubscribe();
     };
   }, [user]);
 
   // Handle adding a new defect
   const handleAddDefect = () => {
     const newDefect = {
-      id: null,
+      id: null, // Temporary ID for the new defect
       SNo: data.length + 1,
       'Vessel Name': '',
       Equipments: '',
@@ -89,6 +81,7 @@ function App() {
   const handleSaveDefect = async (updatedDefect) => {
     try {
       if (updatedDefect.id) {
+        // Update an existing defect
         const { error } = await supabase
           .from('defects register')
           .update({
@@ -104,6 +97,7 @@ function App() {
           .eq('id', updatedDefect.id);
         if (error) throw error;
       } else {
+        // Insert a new defect
         const { data: newDefect, error } = await supabase
           .from('defects register')
           .insert({
@@ -118,14 +112,15 @@ function App() {
           })
           .single();
         if (error) throw error;
-        updatedDefect.id = newDefect.id;
+        updatedDefect.id = newDefect.id; // Update local state with new defect ID
       }
-      fetchData(); // Refresh data after saving
+      fetchData(); // Refresh data
     } catch (error) {
       console.error("Error saving defect:", error);
     }
   };
 
+  // Logout functionality
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Error logging out:", error);
@@ -147,7 +142,12 @@ function App() {
           <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', right: '10px', padding: '10px 20px', backgroundColor: '#FF4D4D', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
             Logout
           </button>
-          <DataTable data={data} vessels={vessels} onAddDefect={handleAddDefect} onSaveDefect={handleSaveDefect} />
+          <DataTable 
+            data={data} 
+            assignedVessels={assignedVessels} 
+            onAddDefect={handleAddDefect} 
+            onSaveDefect={handleSaveDefect} 
+          />
         </>
       ) : (
         <Auth onLogin={setUser} />
