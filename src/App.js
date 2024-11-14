@@ -41,16 +41,23 @@ function App() {
   };
 
   // Combined fetch operations on login
+  // Ensure the correct syntax for your useEffect
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (user) {
-        await fetchAssignedVessels();
-        await fetchData();
-      }
-    };
+    if (user) {
+      fetchAssignedVessels();
+      fetchData();
+    }
   
-    fetchUserData();
-  }, [user, fetchAssignedVessels, fetchData]);
+    // Clean up auth listener on component unmount
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+  
+    return () => {
+      if (authListener) authListener.unsubscribe();
+    };
+  }, [user]); // Add 'user' as a dependency
+
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
