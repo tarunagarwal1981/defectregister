@@ -1,43 +1,36 @@
+// DataTable.js
 import React, { useState } from 'react';
 
-const DataTable = ({ data, onSaveDefect }) => {
+const DataTable = ({ data, onSaveDefect, onAddDefect }) => {
   const [editingId, setEditingId] = useState(null);
   const [editedData, setEditedData] = useState({});
-  const [isAdding, setIsAdding] = useState(false);
 
-  // Start editing a specific row
   const handleEdit = (row) => {
     setEditingId(row.id);
     setEditedData({ ...row });
   };
 
-  // Save changes to the current row
   const handleSave = () => {
     onSaveDefect(editedData);
     setEditingId(null);
     setEditedData({});
-    setIsAdding(false); // End add mode after saving
   };
 
-  // Handle input change for specific fields in the row being edited
+  const handleAdd = () => {
+    onAddDefect();
+  };
+
   const handleChange = (field, value) => {
-    setEditedData((prev) => ({
+    setEditedData(prev => ({
       ...prev,
-      [field]: value,
+      [field]: value
     }));
   };
 
-  // Start adding a new row
-  const handleAddDefect = () => {
-    setIsAdding(true);
-    setEditedData({}); // Clear the edited data for a fresh entry
-  };
-
-  // Render cell with conditional editing input
   const renderCell = (row, field, type = "text") => {
-    const isEditing = editingId === row.id || isAdding;
+    const isEditing = editingId === row.id;
 
-    if (isEditing && (editingId === row.id || isAdding)) {
+    if (isEditing) {
       return (
         <input
           type={type}
@@ -47,18 +40,13 @@ const DataTable = ({ data, onSaveDefect }) => {
         />
       );
     }
-    return row[field] || "";
+    return row[field];
   };
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4' }}>
       <h2 style={{ color: '#f4f4f4' }}>Defects Table</h2>
-      <button
-        onClick={handleAddDefect}
-        style={{ padding: '10px 20px', margin: '10px 0', backgroundColor: '#4CAF50', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
-      >
-        Add Defect
-      </button>
+      <button onClick={handleAdd} style={addButtonStyle}>Add Defect</button>
       
       <table style={{
         width: '100%',
@@ -106,84 +94,20 @@ const DataTable = ({ data, onSaveDefect }) => {
               </td>
             </tr>
           ))}
-          {isAdding && (
-            <tr>
-              <td style={cellStyle}>{data.length + 1}</td>
-              <td style={cellStyle}>
-                <input
-                  type="text"
-                  value={editedData["Vessel Name"] || ""}
-                  onChange={(e) => handleChange("Vessel Name", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <input
-                  type="text"
-                  value={editedData["Equipments"] || ""}
-                  onChange={(e) => handleChange("Equipments", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <input
-                  type="text"
-                  value={editedData["Description"] || ""}
-                  onChange={(e) => handleChange("Description", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <input
-                  type="text"
-                  value={editedData["Action Planned"] || ""}
-                  onChange={(e) => handleChange("Action Planned", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <input
-                  type="text"
-                  value={editedData["Criticality"] || ""}
-                  onChange={(e) => handleChange("Criticality", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <input
-                  type="date"
-                  value={editedData["Date Reported"] || ""}
-                  onChange={(e) => handleChange("Date Reported", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <input
-                  type="date"
-                  value={editedData["Date Completed"] || ""}
-                  onChange={(e) => handleChange("Date Completed", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <input
-                  type="text"
-                  value={editedData["Status (Vessel)"] || ""}
-                  onChange={(e) => handleChange("Status (Vessel)", e.target.value)}
-                  style={inputStyle}
-                />
-              </td>
-              <td style={cellStyle}>
-                <button onClick={handleSave} style={actionButtonStyle}>
-                  Save
-                </button>
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
   );
+};
+
+const addButtonStyle = {
+  padding: '10px 20px',
+  backgroundColor: '#4CAF50',
+  color: '#fff',
+  border: 'none',
+  cursor: 'pointer',
+  marginBottom: '10px',
+  borderRadius: '4px',
 };
 
 const headerStyle = {
@@ -204,7 +128,7 @@ const inputStyle = {
   backgroundColor: '#2a3f5f',
   color: '#f4f4f4',
   border: '1px solid #4a5f81',
-  borderRadius: '4px',
+  borderRadius: '4px'
 };
 
 const actionButtonStyle = {
