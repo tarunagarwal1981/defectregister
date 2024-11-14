@@ -20,25 +20,26 @@ function App() {
       setLoading(true);
       setError(null);
 
-      // First get user's assigned vessels
-      const { data: userVessels, error: vesselsError } = await supabase
-        .from('user_vessels')
-        .select(`
-          vessel_id,
-          vessels:vessel_id (
-            vessel_id,
-            vessel_name
-          )
-        `)
-        .eq('user_id', user.id);
+      // Fetch vessel data with names
+      const { data: vesselsData, error: vesselsError } = await supabase
+        .from('vessels')
+        .select('vessel_id, vessel_name');
 
       if (vesselsError) throw vesselsError;
 
-      // Extract vessel IDs and create vessel names mapping
+      // Get user's assigned vessels
+      const { data: userVessels, error: userVesselsError } = await supabase
+        .from('user_vessels')
+        .select('vessel_id')
+        .eq('user_id', user.id);
+
+      if (userVesselsError) throw userVesselsError;
+
+      // Create vessel names mapping and assigned vessel IDs
       const vesselIds = userVessels.map(v => v.vessel_id);
-      const vesselsMap = userVessels.reduce((acc, v) => {
-        if (v.vessels) {
-          acc[v.vessels.vessel_id] = v.vessels.vessel_name;
+      const vesselsMap = vesselsData.reduce((acc, vessel) => {
+        if (vesselIds.includes(vessel.vessel_id)) {
+          acc[vessel.vessel_id] = vessel.vessel_name;
         }
         return acc;
       }, {});
@@ -54,7 +55,6 @@ function App() {
       setAssignedVessels(vesselIds);
       setVesselNames(vesselsMap);
       setData(defects || []);
-      
     } catch (error) {
       console.error("Error fetching data:", error);
       setError(error.message);
@@ -67,7 +67,6 @@ function App() {
     if (user) {
       fetchUserData();
     } else {
-      // Clear data when user logs out
       setData([]);
       setAssignedVessels([]);
       setVesselNames({});
@@ -85,7 +84,7 @@ function App() {
 
   const handleAddDefect = useCallback(() => {
     if (assignedVessels.length === 0) {
-      setError("You don't have any vessels assigned to you. Please contact your administrator.");
+      setError("No vessels assigned to you. Contact administrator.");
       return;
     }
 
@@ -111,9 +110,8 @@ function App() {
     try {
       setError(null);
 
-      // Validate vessel assignment
       if (!assignedVessels.includes(updatedDefect.vessel_id)) {
-        throw new Error("You don't have permission to add/edit defects for this vessel.");
+        throw new Error("Not authorized for this vessel");
       }
 
       const isNewDefect = updatedDefect.id?.startsWith('temp-');
@@ -129,17 +127,10 @@ function App() {
       };
 
       if (!isNewDefect) {
-        // Verify user has permission to edit this defect
-        const existingDefect = data.find(d => d.id === updatedDefect.id);
-        if (!existingDefect || !assignedVessels.includes(existingDefect.vessel_id)) {
-          throw new Error("You don't have permission to edit this defect.");
-        }
-
         const { error } = await supabase
           .from('defects register')
           .update(defectData)
-          .eq('id', updatedDefect.id)
-          .single();
+          .eq('id', updatedDefect.id);
 
         if (error) throw error;
 
@@ -166,18 +157,13 @@ function App() {
       console.error("Error saving defect:", error);
       setError(error.message);
     }
-  }, [assignedVessels, data]);
+  }, [assignedVessels]);
 
   const handleLogout = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
-      setData([]);
-      setAssignedVessels([]);
-      setVesselNames({});
-      setEditingId(null);
-      setEditedDefect(null);
     } catch (error) {
       console.error("Error logging out:", error);
       setError(error.message);
@@ -187,9 +173,7 @@ function App() {
   return (
     <div className="app-container">
       {error && (
-        <div className="error-message">
-          {error}
-        </div>
+        <div className="error-message">{error}</div>
       )}
 
       {user ? (
@@ -234,7 +218,6 @@ function App() {
           border-radius: 4px;
           z-index: 1000;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          animation: slideIn 0.3s ease-out;
         }
 
         .logout-button {
@@ -255,18 +238,6 @@ function App() {
 
         .logout-button:hover {
           background-color: #ff3333;
-          transform: translateY(-1px);
-        }
-
-        @keyframes slideIn {
-          from {
-            transform: translate(-50%, -100%);
-            opacity: 0;
-          }
-          to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-          }
         }
       `}</style>
     </div>
