@@ -1,31 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-interface Defect {
-  id: string;
-  SNo: number;
-  vessel_id: string;
-  Equipments: string;
-  Description: string;
-  'Action Planned': string;
-  Criticality: string;
-  'Date Reported': string;
-  'Date Completed': string;
-  'Status (Vessel)': string;
-}
-
-interface Props {
-  data: Defect[];
-  onAddDefect: () => void;
-  onSaveDefect: (defect: Defect) => Promise<void>;
-  vessels: string[];
-  loading: boolean;
-}
-
-const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editedDefect, setEditedDefect] = useState<Defect | null>(null);
-  const [vesselNames, setVesselNames] = useState<{ [key: string]: string }>({});
+const DefectsTable = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => {
+  const [editingId, setEditingId] = useState(null);
+  const [editedDefect, setEditedDefect] = useState(null);
+  const [vesselNames, setVesselNames] = useState({});
 
   // Fetch vessel names when component mounts
   useEffect(() => {
@@ -37,7 +16,7 @@ const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessel
         
         if (error) throw error;
         
-        const namesMap = vesselData.reduce((acc: { [key: string]: string }, vessel) => {
+        const namesMap = vesselData.reduce((acc, vessel) => {
           acc[vessel.vessel_id] = vessel.vessel_name;
           return acc;
         }, {});
@@ -51,7 +30,7 @@ const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessel
     fetchVesselNames();
   }, []);
 
-  const handleEdit = (defect: Defect) => {
+  const handleEdit = (defect) => {
     setEditingId(defect.id);
     setEditedDefect({ ...defect });
   };
@@ -69,7 +48,7 @@ const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessel
     setEditedDefect(null);
   };
 
-  const handleChange = (field: keyof Defect, value: string) => {
+  const handleChange = (field, value) => {
     if (editedDefect) {
       setEditedDefect({ ...editedDefect, [field]: value });
     }
@@ -249,10 +228,16 @@ const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessel
           border: none;
           border-radius: 4px;
           cursor: pointer;
+          transition: background-color 0.2s;
         }
 
-        .add-button:hover {
+        .add-button:hover:not(:disabled) {
           background-color: #45a049;
+        }
+
+        .add-button:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
         }
 
         .table-container {
@@ -300,6 +285,7 @@ const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessel
           border-radius: 4px;
           cursor: pointer;
           font-size: 14px;
+          transition: background-color 0.2s;
         }
 
         .edit-button {
@@ -307,14 +293,26 @@ const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessel
           color: white;
         }
 
+        .edit-button:hover {
+          background-color: #45a049;
+        }
+
         .save-button {
           background-color: #2196F3;
           color: white;
         }
 
+        .save-button:hover {
+          background-color: #1976D2;
+        }
+
         .cancel-button {
           background-color: #f44336;
           color: white;
+        }
+
+        .cancel-button:hover {
+          background-color: #d32f2f;
         }
 
         button:disabled {
