@@ -1,161 +1,329 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
-const DataTable = ({ data, vessels, onSaveDefect, onAddDefect }) => {
-  const [editingId, setEditingId] = useState(null);
-  const [editedData, setEditedData] = useState({});
+interface Defect {
+  id: string;
+  SNo: number;
+  vessel_id: string;
+  Equipments: string;
+  Description: string;
+  'Action Planned': string;
+  Criticality: string;
+  'Date Reported': string;
+  'Date Completed': string;
+  'Status (Vessel)': string;
+}
 
-  // Handle initiating edit mode
-  const handleEdit = (row) => {
-    setEditingId(row.id);
-    setEditedData({ ...row });
+interface Props {
+  data: Defect[];
+  onAddDefect: () => void;
+  onSaveDefect: (defect: Defect) => Promise<void>;
+  vessels: string[];
+  loading: boolean;
+}
+
+const DefectsTable: React.FC<Props> = ({ data, onAddDefect, onSaveDefect, vessels, loading }) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editedDefect, setEditedDefect] = useState<Defect | null>(null);
+  const [vesselNames, setVesselNames] = useState<{ [key: string]: string }>({});
+
+  // Fetch vessel names when component mounts
+  useEffect(() => {
+    const fetchVesselNames = async () => {
+      try {
+        const { data: vesselData, error } = await supabase
+          .from('vessels')
+          .select('vessel_id, vessel_name');
+        
+        if (error) throw error;
+        
+        const namesMap = vesselData.reduce((acc: { [key: string]: string }, vessel) => {
+          acc[vessel.vessel_id] = vessel.vessel_name;
+          return acc;
+        }, {});
+        
+        setVesselNames(namesMap);
+      } catch (error) {
+        console.error('Error fetching vessel names:', error);
+      }
+    };
+
+    fetchVesselNames();
+  }, []);
+
+  const handleEdit = (defect: Defect) => {
+    setEditingId(defect.id);
+    setEditedDefect({ ...defect });
   };
 
-  // Handle saving edits or new defect entries
-  const handleSave = () => {
-    onSaveDefect(editedData);
-    setEditingId(null);
-    setEditedData({});
-  };
-
-  // Add a new row for defect entry
-  const handleAdd = () => {
-    onAddDefect();
-  };
-
-  // Track changes in the edited input fields
-  const handleChange = (field, value) => {
-    setEditedData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // Render cells for edit or display based on edit mode
-  const renderCell = (row, field, type = 'text') => {
-    const isEditing = editingId === row.id;
-    if (field === 'vessel_id' && isEditing) {
-      return (
-        <select
-          value={editedData[field] || ''}
-          onChange={(e) => handleChange(field, e.target.value)}
-          style={inputStyle}
-        >
-          <option value="">Select Vessel</option>
-          {vessels.map((vessel) => (
-            <option key={vessel.vessel_id} value={vessel.vessel_id}>
-              {vessel.vessel_name}
-            </option>
-          ))}
-        </select>
-      );
-    } else if (isEditing) {
-      return (
-        <input
-          type={type}
-          value={editedData[field] || ''}
-          onChange={(e) => handleChange(field, e.target.value)}
-          style={inputStyle}
-        />
-      );
+  const handleSave = async () => {
+    if (editedDefect) {
+      await onSaveDefect(editedDefect);
+      setEditingId(null);
+      setEditedDefect(null);
     }
-    return row[field] || ''; // Display cell content when not editing
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditedDefect(null);
+  };
+
+  const handleChange = (field: keyof Defect, value: string) => {
+    if (editedDefect) {
+      setEditedDefect({ ...editedDefect, [field]: value });
+    }
   };
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#132337', minHeight: '100vh', color: '#f4f4f4' }}>
-      <h2 style={{ color: '#f4f4f4' }}>Defects Table</h2>
-      <button onClick={handleAdd} style={addButtonStyle}>Add Defect</button>
-      
-      <table style={{
-        width: '100%',
-        borderCollapse: 'collapse',
-        marginTop: '10px',
-        backgroundColor: '#1b2a3a',
-        color: '#f4f4f4',
-      }}>
-        <thead>
-          <tr>
-            <th style={headerStyle}>S.No</th>
-            <th style={headerStyle}>Vessel Name</th>
-            <th style={headerStyle}>Equipments</th>
-            <th style={headerStyle}>Description</th>
-            <th style={headerStyle}>Action Planned</th>
-            <th style={headerStyle}>Criticality</th>
-            <th style={headerStyle}>Date Reported</th>
-            <th style={headerStyle}>Date Completed</th>
-            <th style={headerStyle}>Status (Vessel)</th>
-            <th style={headerStyle}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, index) => (
-            <tr key={row.id}>
-              <td style={cellStyle}>{index + 1}</td>
-              <td style={cellStyle}>{renderCell(row, 'vessel_id')}</td>
-              <td style={cellStyle}>{renderCell(row, 'Equipments')}</td>
-              <td style={cellStyle}>{renderCell(row, 'Description')}</td>
-              <td style={cellStyle}>{renderCell(row, 'Action Planned')}</td>
-              <td style={cellStyle}>{renderCell(row, 'Criticality')}</td>
-              <td style={cellStyle}>{renderCell(row, 'Date Reported', 'date')}</td>
-              <td style={cellStyle}>{renderCell(row, 'Date Completed', 'date')}</td>
-              <td style={cellStyle}>{renderCell(row, 'Status (Vessel)')}</td>
-              <td style={cellStyle}>
-                {editingId === row.id ? (
-                  <button onClick={handleSave} style={actionButtonStyle}>
-                    Save
-                  </button>
-                ) : (
-                  <button onClick={() => handleEdit(row)} style={actionButtonStyle}>
-                    Edit
-                  </button>
-                )}
-              </td>
+    <div className="container">
+      <div className="header">
+        <h1>Defects Table</h1>
+        <button 
+          onClick={onAddDefect}
+          className="add-button"
+          disabled={loading}
+        >
+          Add Defect
+        </button>
+      </div>
+
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Vessel Name</th>
+              <th>Equipments</th>
+              <th>Description</th>
+              <th>Action Planned</th>
+              <th>Criticality</th>
+              <th>Date Reported</th>
+              <th>Date Completed</th>
+              <th>Status (Vessel)</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((defect) => (
+              <tr key={defect.id}>
+                <td>{defect.SNo}</td>
+                <td>
+                  {editingId === defect.id ? (
+                    <select
+                      value={editedDefect?.vessel_id || ''}
+                      onChange={(e) => handleChange('vessel_id', e.target.value)}
+                    >
+                      <option value="">Select Vessel</option>
+                      {vessels.map((vesselId) => (
+                        <option key={vesselId} value={vesselId}>
+                          {vesselNames[vesselId] || vesselId}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    vesselNames[defect.vessel_id] || defect.vessel_id
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <input
+                      type="text"
+                      value={editedDefect?.Equipments || ''}
+                      onChange={(e) => handleChange('Equipments', e.target.value)}
+                    />
+                  ) : (
+                    defect.Equipments
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <textarea
+                      value={editedDefect?.Description || ''}
+                      onChange={(e) => handleChange('Description', e.target.value)}
+                    />
+                  ) : (
+                    defect.Description
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <textarea
+                      value={editedDefect?.['Action Planned'] || ''}
+                      onChange={(e) => handleChange('Action Planned', e.target.value)}
+                    />
+                  ) : (
+                    defect['Action Planned']
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <select
+                      value={editedDefect?.Criticality || ''}
+                      onChange={(e) => handleChange('Criticality', e.target.value)}
+                    >
+                      <option value="">Select Criticality</option>
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  ) : (
+                    defect.Criticality
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <input
+                      type="date"
+                      value={editedDefect?.['Date Reported'] || ''}
+                      onChange={(e) => handleChange('Date Reported', e.target.value)}
+                    />
+                  ) : (
+                    defect['Date Reported']
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <input
+                      type="date"
+                      value={editedDefect?.['Date Completed'] || ''}
+                      onChange={(e) => handleChange('Date Completed', e.target.value)}
+                    />
+                  ) : (
+                    defect['Date Completed']
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <select
+                      value={editedDefect?.['Status (Vessel)'] || ''}
+                      onChange={(e) => handleChange('Status (Vessel)', e.target.value)}
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Open">Open</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  ) : (
+                    defect['Status (Vessel)']
+                  )}
+                </td>
+                <td>
+                  {editingId === defect.id ? (
+                    <div className="action-buttons">
+                      <button onClick={handleSave} className="save-button">
+                        Save
+                      </button>
+                      <button onClick={handleCancel} className="cancel-button">
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => handleEdit(defect)} className="edit-button">
+                      Edit
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <style jsx>{`
+        .container {
+          padding: 20px;
+        }
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        .add-button {
+          background-color: #4CAF50;
+          color: white;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        .add-button:hover {
+          background-color: #45a049;
+        }
+
+        .table-container {
+          overflow-x: auto;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        th, td {
+          padding: 12px;
+          text-align: left;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+          background-color: rgba(255, 255, 255, 0.1);
+          font-weight: bold;
+        }
+
+        tr:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        input, select, textarea {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 5px;
+        }
+
+        .edit-button, .save-button, .cancel-button {
+          padding: 5px 10px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+        }
+
+        .edit-button {
+          background-color: #4CAF50;
+          color: white;
+        }
+
+        .save-button {
+          background-color: #2196F3;
+          color: white;
+        }
+
+        .cancel-button {
+          background-color: #f44336;
+          color: white;
+        }
+
+        button:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+      `}</style>
     </div>
   );
 };
 
-const addButtonStyle = {
-  padding: '10px 20px',
-  backgroundColor: '#4CAF50',
-  color: '#fff',
-  border: 'none',
-  cursor: 'pointer',
-  marginBottom: '10px',
-  borderRadius: '4px',
-};
-
-const headerStyle = {
-  padding: '10px',
-  backgroundColor: '#3A5F81',
-  color: '#FFFFFF',
-  fontWeight: 'bold',
-};
-
-const cellStyle = {
-  padding: '10px',
-  borderBottom: '1px solid #ddd',
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '5px',
-  backgroundColor: '#2a3f5f',
-  color: '#f4f4f4',
-  border: '1px solid #4a5f81',
-  borderRadius: '4px',
-};
-
-const actionButtonStyle = {
-  padding: '5px 10px',
-  backgroundColor: '#4CAF50',
-  color: '#fff',
-  border: 'none',
-  cursor: 'pointer',
-  borderRadius: '4px',
-};
-
-export default DataTable;
+export default DefectsTable;
