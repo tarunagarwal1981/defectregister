@@ -33,7 +33,7 @@ const DataTable = ({ data, vessels, onSaveDefect, onAddDefect }) => {
   // Render cells for edit or display based on edit mode
   const renderCell = (row, field, type = 'text') => {
     const isEditing = editingId === row.id;
-    if (field === 'Vessel Name' && isEditing) {
+    if (field === 'vessel_id' && isEditing) {
       return (
         <select
           value={editedData[field] || ''}
@@ -42,8 +42,8 @@ const DataTable = ({ data, vessels, onSaveDefect, onAddDefect }) => {
         >
           <option value="">Select Vessel</option>
           {vessels.map((vessel) => (
-            <option key={vessel} value={vessel}>
-              {vessel}
+            <option key={vessel.vessel_id} value={vessel.vessel_id}>
+              {vessel.vessel_name}
             </option>
           ))}
         </select>
@@ -58,7 +58,7 @@ const DataTable = ({ data, vessels, onSaveDefect, onAddDefect }) => {
         />
       );
     }
-    return row[field];
+    return row[field] || ''; // Display cell content when not editing
   };
 
   return (
@@ -91,7 +91,7 @@ const DataTable = ({ data, vessels, onSaveDefect, onAddDefect }) => {
           {data.map((row, index) => (
             <tr key={row.id}>
               <td style={cellStyle}>{index + 1}</td>
-              <td style={cellStyle}>{renderCell(row, 'Vessel Name')}</td>
+              <td style={cellStyle}>{renderCell(row, 'vessel_id')}</td>
               <td style={cellStyle}>{renderCell(row, 'Equipments')}</td>
               <td style={cellStyle}>{renderCell(row, 'Description')}</td>
               <td style={cellStyle}>{renderCell(row, 'Action Planned')}</td>
