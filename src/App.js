@@ -6,15 +6,33 @@ import { supabase } from './supabaseClient';
 function App() {
   const [user, setUser] = useState(null);
   const [data, setData] = useState([]);
+  const [vessels, setVessels] = useState([]); // List of vessels assigned to the user
   const [loading, setLoading] = useState(true);
 
-  // Fetch data function
+  // Fetch assigned vessels for the logged-in user
+  const fetchAssignedVessels = async () => {
+    try {
+      const { data: assignedVessels, error } = await supabase
+        .from('user_vessels')
+        .select('vessel_name')
+        .eq('user_id', user.id);
+      if (error) throw error;
+
+      setVessels(assignedVessels.map(v => v.vessel_name)); // Set vessel names for dropdown
+    } catch (error) {
+      console.error("Error fetching vessels:", error);
+    }
+  };
+
+  // Fetch defect data for assigned vessels only
   const fetchData = async () => {
     try {
-      const { data: defects, error } = await supabase.from('defects register').select('*');
+      const { data: defects, error } = await supabase
+        .from('defects register')
+        .select('*');
       if (error) throw error;
-      console.log("Data fetched:", defects);
-      setData(defects);
+
+      setData(defects); // Supabase policies will filter data based on assigned vessels
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -22,8 +40,12 @@ function App() {
     }
   };
 
+  // Combined fetch operations on login
   useEffect(() => {
-    fetchData();
+    if (user) {
+      fetchAssignedVessels();
+      fetchData();
+    }
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -32,12 +54,12 @@ function App() {
     return () => {
       if (authListener) authListener.unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   // Handle adding a new defect
   const handleAddDefect = () => {
     const newDefect = {
-      id: null, // Placeholder ID for new defect
+      id: null,
       SNo: data.length + 1,
       'Vessel Name': '',
       Equipments: '',
@@ -55,7 +77,6 @@ function App() {
   const handleSaveDefect = async (updatedDefect) => {
     try {
       if (updatedDefect.id) {
-        // Update an existing defect
         const { error } = await supabase
           .from('defects register')
           .update({
@@ -71,7 +92,6 @@ function App() {
           .eq('id', updatedDefect.id);
         if (error) throw error;
       } else {
-        // Insert a new defect
         const { data: newDefect, error } = await supabase
           .from('defects register')
           .insert({
@@ -86,18 +106,14 @@ function App() {
           })
           .single();
         if (error) throw error;
-
-        // Update the new defect ID and refresh data
         updatedDefect.id = newDefect.id;
       }
-      // Re-fetch data after saving a new or edited defect to update the table
-      fetchData();
+      fetchData(); // Refresh data after saving
     } catch (error) {
       console.error("Error saving defect:", error);
     }
   };
 
-  // Logout functionality
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Error logging out:", error);
@@ -119,7 +135,7 @@ function App() {
           <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', right: '10px', padding: '10px 20px', backgroundColor: '#FF4D4D', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
             Logout
           </button>
-          <DataTable data={data} onAddDefect={handleAddDefect} onSaveDefect={handleSaveDefect} />
+          <DataTable data={data} vessels={vessels} onAddDefect={handleAddDefect} onSaveDefect={handleSaveDefect} />
         </>
       ) : (
         <Auth onLogin={setUser} />
