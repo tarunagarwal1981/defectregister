@@ -1,16 +1,16 @@
 import React from 'react';
 
-const DefectsTable = ({ 
-  data, 
-  onAddDefect, 
-  onSaveDefect, 
+const DefectsTable = ({
+  data,
+  onAddDefect,
+  onSaveDefect,
   vessels,
   vesselNames,
   loading,
   editingId,
   editedDefect,
   setEditingId,
-  setEditedDefect 
+  setEditedDefect
 }) => {
   const handleEdit = (defect) => {
     setEditingId(defect.id);
@@ -83,9 +83,9 @@ const DefectsTable = ({
                           className="form-input"
                         >
                           <option value="">Select Vessel</option>
-                          {vessels.map((vesselId) => (
-                            <option key={vesselId} value={vesselId}>
-                              {vesselNames[vesselId] || 'Loading...'}
+                          {Object.entries(vesselNames).map(([id, name]) => (
+                            <option key={id} value={id}>
+                              {name}
                             </option>
                           ))}
                         </select>
@@ -305,43 +305,26 @@ const DefectsTable = ({
           border-color: #1a73e8;
         }
 
-        .criticality {
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-weight: 500;
-        }
-
-        .criticality.high {
-          background-color: rgba(244, 67, 54, 0.2);
-          color: #ff7875;
-        }
-
-        .criticality.medium {
-          background-color: rgba(255, 193, 7, 0.2);
-          color: #ffd666;
-        }
-
-        .criticality.low {
-          background-color: rgba(76, 175, 80, 0.2);
-          color: #95de64;
-        }
-
+        .criticality,
         .status {
           padding: 4px 8px;
           border-radius: 4px;
           font-weight: 500;
         }
 
+        .criticality.high,
         .status.open {
           background-color: rgba(244, 67, 54, 0.2);
           color: #ff7875;
         }
 
+        .criticality.medium,
         .status.in-progress {
           background-color: rgba(255, 193, 7, 0.2);
           color: #ffd666;
         }
 
+        .criticality.low,
         .status.completed {
           background-color: rgba(76, 175, 80, 0.2);
           color: #95de64;
@@ -363,11 +346,6 @@ const DefectsTable = ({
           font-size: 16px;
           font-weight: 500;
           transition: all 0.2s;
-        }
-
-        .add-button:hover:not(:disabled) {
-          background-color: #45a049;
-          transform: translateY(-1px);
         }
 
         .action-buttons {
