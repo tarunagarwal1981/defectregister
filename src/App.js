@@ -3,6 +3,28 @@ import Auth from './components/Auth';
 import DataTable from './components/DefectsTable';
 import { supabase } from './supabaseClient';
 
+// Utility function for fetching user's vessels
+const getUserVessels = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('user_vessels')
+      .select(`
+        vessel_id,
+        vessels!inner (
+          vessel_id,
+          vessel_name
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching user vessels:', error);
+    throw error;
+  }
+};
+
 function App() {
   const [user, setUser] = useState(null);
   const [data, setData] = useState([]);
@@ -20,29 +42,23 @@ function App() {
       setLoading(true);
       setError(null);
 
-      // Fetch vessel data with names
-      const { data: vesselsData, error: vesselsError } = await supabase
-        .from('vessels')
-        .select('vessel_id, vessel_name');
+      console.log('Fetching data for user:', user.id); // Debug log
 
-      if (vesselsError) throw vesselsError;
+      // Get user's vessels with names
+      const userVessels = await getUserVessels(user.id);
+      console.log('User vessels:', userVessels); // Debug log
 
-      // Get user's assigned vessels
-      const { data: userVessels, error: userVesselsError } = await supabase
-        .from('user_vessels')
-        .select('vessel_id')
-        .eq('user_id', user.id);
-
-      if (userVesselsError) throw userVesselsError;
-
-      // Create vessel names mapping and assigned vessel IDs
+      // Extract vessel IDs and names
       const vesselIds = userVessels.map(v => v.vessel_id);
-      const vesselsMap = vesselsData.reduce((acc, vessel) => {
-        if (vesselIds.includes(vessel.vessel_id)) {
-          acc[vessel.vessel_id] = vessel.vessel_name;
+      const vesselsMap = userVessels.reduce((acc, v) => {
+        if (v.vessels) {
+          acc[v.vessel_id] = v.vessels.vessel_name;
         }
         return acc;
       }, {});
+
+      console.log('Vessel IDs:', vesselIds); // Debug log
+      console.log('Vessel Names:', vesselsMap); // Debug log
 
       // Fetch defects for assigned vessels
       const { data: defects, error: defectsError } = await supabase
@@ -52,9 +68,12 @@ function App() {
 
       if (defectsError) throw defectsError;
 
+      console.log('Fetched defects:', defects); // Debug log
+
       setAssignedVessels(vesselIds);
       setVesselNames(vesselsMap);
       setData(defects || []);
+      
     } catch (error) {
       console.error("Error fetching data:", error);
       setError(error.message);
