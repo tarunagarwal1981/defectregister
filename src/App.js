@@ -136,6 +136,7 @@ function App() {
       const isNewDefect = updatedDefect.id?.startsWith('temp-');
       const defectData = {
         vessel_id: updatedDefect.vessel_id,
+        vessel_name: vesselNames[updatedDefect.vessel_id], // Add vessel_name from vesselNames mapping
         Equipments: updatedDefect.Equipments,
         Description: updatedDefect.Description,
         'Action Planned': updatedDefect['Action Planned'],
@@ -176,7 +177,7 @@ function App() {
       console.error("Error saving defect:", error);
       setError(error.message);
     }
-  }, [assignedVessels]);
+  }, [assignedVessels, vesselNames]); // Added vesselNames to dependencies
 
   const handleLogout = useCallback(async () => {
     try {
